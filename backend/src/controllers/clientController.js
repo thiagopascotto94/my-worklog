@@ -1,0 +1,103 @@
+const { Client } = require('../models');
+
+// @route   POST api/clients
+// @desc    Create a client
+// @access  Private
+exports.createClient = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const userId = req.user.userId;
+
+    if (!name) {
+      return res.status(400).json({ message: 'Client name is required.' });
+    }
+
+    const newClient = await Client.create({
+      name,
+      userId,
+    });
+
+    res.status(201).json(newClient);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @route   GET api/clients
+// @desc    Get all clients for a user
+// @access  Private
+exports.getAllClients = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const clients = await Client.findAll({ where: { userId } });
+    res.status(200).json(clients);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @route   GET api/clients/:id
+// @desc    Get a single client by ID
+// @access  Private
+exports.getClientById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    const client = await Client.findOne({ where: { id, userId } });
+
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found.' });
+    }
+
+    res.status(200).json(client);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @route   PUT api/clients/:id
+// @desc    Update a client
+// @access  Private
+exports.updateClient = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const userId = req.user.userId;
+
+    const client = await Client.findOne({ where: { id, userId } });
+
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found.' });
+    }
+
+    client.name = name || client.name; // Only update name if provided
+    await client.save();
+
+    res.status(200).json(client);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @route   DELETE api/clients/:id
+// @desc    Delete a client
+// @access  Private
+exports.deleteClient = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    const client = await Client.findOne({ where: { id, userId } });
+
+    if (!client) {
+      return res.status(404).json({ message: 'Client not found.' });
+    }
+
+    await client.destroy();
+
+    res.status(200).json({ message: 'Client deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
