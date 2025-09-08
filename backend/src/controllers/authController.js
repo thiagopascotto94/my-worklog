@@ -4,10 +4,14 @@ const { User, RootUser } = require('../models');
 
 const register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, firstName, lastName } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password.' });
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ message: 'Please provide email, password, first name, and last name.' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long.' });
     }
 
     const existingUser = await User.findOne({ where: { email } });
@@ -20,6 +24,8 @@ const register = async (req, res) => {
     const user = await User.create({
       email,
       password: hashedPassword,
+      firstName,
+      lastName,
     });
 
     res.status(201).json({ message: 'User created successfully', userId: user.id });
