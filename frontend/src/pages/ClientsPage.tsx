@@ -41,12 +41,12 @@ const ClientsPage: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const handleSave = async (name: string, id?: number) => {
+  const handleSave = async (clientData: Partial<clientService.Client>, id?: number) => {
     try {
       if (id) {
-        await clientService.updateClient(id, name);
+        await clientService.updateClient(id, clientData);
       } else {
-        await clientService.createClient(name);
+        await clientService.createClient(clientData);
       }
       handleCloseModal();
       fetchClients(); // Refetch clients after saving
@@ -85,6 +85,8 @@ const ClientsPage: React.FC = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
+                <TableCell>CNPJ</TableCell>
+                <TableCell>Telefone</TableCell>
                 <TableCell>Created At</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
@@ -93,6 +95,8 @@ const ClientsPage: React.FC = () => {
               {clients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell>{client.name}</TableCell>
+                  <TableCell>{client.cnpj}</TableCell>
+                  <TableCell>{client.telefone}</TableCell>
                   <TableCell>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Button size="small" sx={{ mr: 1 }} onClick={() => handleOpenModal(client)}>Edit</Button>
