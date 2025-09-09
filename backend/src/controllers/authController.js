@@ -96,6 +96,8 @@ const rootLogin = async (req, res) => {
   }
 };
 
+const { sendVerificationEmail } = require('../services/emailService');
+
 const sendVerificationCode = async (req, res) => {
   try {
     const { email } = req.body;
@@ -113,7 +115,9 @@ const sendVerificationCode = async (req, res) => {
 
     // Generate a 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`Verification code for ${email}: ${code}`); // Simulate sending email
+
+    // Send email
+    await sendVerificationEmail(email, code);
 
     const hashedCode = await bcrypt.hash(code, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now

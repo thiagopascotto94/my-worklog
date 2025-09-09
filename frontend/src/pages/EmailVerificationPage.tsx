@@ -84,25 +84,23 @@ const EmailVerificationPage: React.FC = () => {
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-          <Grid container spacing={1} justifyContent="center">
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
             {code.map((digit, index) => (
-              <Grid item xs={2} key={index}>
-                <TextField
-                  inputRef={(el) => (inputRefs.current[index] = el)}
-                  value={digit}
-                  onChange={(e) => handleInputChange(e, index)}
-                  onKeyDown={(e) => handleKeyDown(e, index)}
-                  inputProps={{
-                    maxLength: 1,
-                    style: { textAlign: 'center', fontSize: '1.5rem' },
-                  }}
-                  variant="outlined"
-                  required
-                  fullWidth
-                />
-              </Grid>
+              <TextField
+                key={index}
+                inputRef={(el) => (inputRefs.current[index] = el)}
+                value={digit}
+                onChange={(e) => handleInputChange(e, index)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
+                inputProps={{
+                  maxLength: 1,
+                  style: { textAlign: 'center', fontSize: '1.5rem', width: '2.5rem' },
+                }}
+                variant="outlined"
+                required
+              />
             ))}
-          </Grid>
+          </Box>
 
           {error && <Alert severity="error" sx={{ mt: 2, width: '100%' }}>{error}</Alert>}
           {success && <Alert severity="success" sx={{ mt: 2, width: '100%' }}>{success}</Alert>}
