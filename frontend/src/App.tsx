@@ -8,6 +8,8 @@ import ReportsPage from './pages/ReportsPage';
 import ReportViewPage from './pages/ReportViewPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Timer from './components/Timer';
+import RegistrationSuccessPage from './pages/RegistrationSuccessPage';
+import EmailVerificationPage from './pages/EmailVerificationPage';
 
 const isAuthenticated = () => {
   return localStorage.getItem('accessToken') !== null;
@@ -41,6 +43,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/registration-success" element={<RegistrationSuccessPage />} />
+        <Route path="/verify-email" element={<EmailVerificationPage />} />
         <Route path="/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
         <Route path="/reports/:id" element={<ProtectedRoute><ReportViewPage /></ProtectedRoute>} />
