@@ -23,6 +23,10 @@ export const getClients = (): Promise<{ data: Client[] }> => {
   return api.get('/clients');
 };
 
+export const getClientById = (id: number): Promise<{ data: Client }> => {
+  return api.get(`/clients/${id}`);
+};
+
 export const createClient = (clientData: Partial<Client>): Promise<{ data: Client }> => {
   return api.post('/clients', clientData);
 };

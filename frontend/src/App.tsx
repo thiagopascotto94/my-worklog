@@ -4,6 +4,8 @@ import { Container, Typography, Box, AppBar, Toolbar, Button } from '@mui/materi
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ClientsPage from './pages/ClientsPage';
+import ClientCreatePage from './pages/ClientCreatePage';
+import ClientEditPage from './pages/ClientEditPage';
 import ReportsPage from './pages/ReportsPage';
 import ReportViewPage from './pages/ReportViewPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -46,6 +48,8 @@ function App() {
         <Route path="/registration-success" element={<RegistrationSuccessPage />} />
         <Route path="/verify-email" element={<EmailVerificationPage />} />
         <Route path="/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
+        <Route path="/clients/new" element={<ProtectedRoute><ClientCreatePage /></ProtectedRoute>} />
+        <Route path="/clients/edit/:id" element={<ProtectedRoute><ClientEditPage /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
         <Route path="/reports/:id" element={<ProtectedRoute><ReportViewPage /></ProtectedRoute>} />
         <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

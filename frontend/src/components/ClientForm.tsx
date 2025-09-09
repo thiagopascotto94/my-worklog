@@ -1,29 +1,13 @@
 import React, { useState, useEffect, forwardRef } from 'react';
-import { Button, TextField, Box, Modal, Typography, Grid } from '@mui/material';
+import { Button, TextField, Box, Typography, Grid, Paper, CircularProgress, Snackbar, Alert } from '@mui/material';
 import { Client, getCnpjData, getCepData } from '../services/clientService';
 import { IMaskInput } from 'react-imask';
 
 interface ClientFormProps {
-  open: boolean;
-  onClose: () => void;
-  onSave: (clientData: Partial<Client>, id?: number) => void;
+  onSave: (clientData: Partial<Client>) => void;
   clientToEdit: Client | null;
+  isSaving: boolean;
 }
-
-const style = {
-  position: 'absolute' as 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '80%',
-  maxWidth: '800px',
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-  maxHeight: '90vh',
-  overflowY: 'auto',
-};
 
 interface CustomProps {
   onChange: (event: { target: { name: string; value: string } }) => void;
@@ -65,8 +49,10 @@ const CepMask = forwardRef<HTMLElement, CustomProps>(function CepMask(props, ref
 });
 
 
-const ClientForm: React.FC<ClientFormProps> = ({ open, onClose, onSave, clientToEdit }) => {
+const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving }) => {
   const [clientData, setClientData] = useState<Partial<Client>>({});
+  const [lookupLoading, setLookupLoading] = useState({ cnpj: false, cep: false });
+  const [lookupError, setLookupError] = useState('');
 
   useEffect(() => {
     if (clientToEdit) {
@@ -74,7 +60,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ open, onClose, onSave, clientTo
     } else {
       setClientData({});
     }
-  }, [clientToEdit, open]);
+  }, [clientToEdit]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setClientData({ ...clientData, [event.target.name]: event.target.value });
@@ -84,6 +70,8 @@ const ClientForm: React.FC<ClientFormProps> = ({ open, onClose, onSave, clientTo
     if (clientData.cnpj) {
       const cnpj = clientData.cnpj.replace(/\D/g, '');
       if (cnpj.length === 14) {
+        setLookupLoading({ ...lookupLoading, cnpj: true });
+        setLookupError('');
         try {
           const { data } = await getCnpjData(cnpj);
           setClientData({
@@ -99,7 +87,9 @@ const ClientForm: React.FC<ClientFormProps> = ({ open, onClose, onSave, clientTo
             telefone: data.telefone.replace(/\D/g, ''),
           });
         } catch (error) {
-          console.error('Failed to fetch CNPJ data', error);
+          setLookupError('Failed to fetch CNPJ data. Please check the CNPJ and try again.');
+        } finally {
+          setLookupLoading({ ...lookupLoading, cnpj: false });
         }
       }
     }
@@ -109,6 +99,8 @@ const ClientForm: React.FC<ClientFormProps> = ({ open, onClose, onSave, clientTo
     if (clientData.cep) {
       const cep = clientData.cep.replace(/\D/g, '');
       if (cep.length === 8) {
+        setLookupLoading({ ...lookupLoading, cep: true });
+        setLookupError('');
         try {
           const { data } = await getCepData(cep);
           setClientData({
@@ -119,7 +111,9 @@ const ClientForm: React.FC<ClientFormProps> = ({ open, onClose, onSave, clientTo
             uf: data.uf,
           });
         } catch (error) {
-          console.error('Failed to fetch CEP data', error);
+          setLookupError('Failed to fetch CEP data. Please check the CEP and try again.');
+        } finally {
+          setLookupLoading({ ...lookupLoading, cep: false });
         }
       }
     }
@@ -128,152 +122,184 @@ const ClientForm: React.FC<ClientFormProps> = ({ open, onClose, onSave, clientTo
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    onSave(clientData, clientToEdit?.id);
+    onSave(clientData);
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box sx={style} component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" component="h2">
-          {clientToEdit ? 'Edit Client' : 'Add New Client'}
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="cnpj"
-              label="CNPJ"
-              name="cnpj"
-              value={clientData.cnpj || ''}
-              onChange={handleChange}
-              onBlur={handleCnpjBlur}
-              InputProps={{
-                inputComponent: CnpjMask as any,
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="inscricaoEstadual"
-              label="Inscrição Estadual"
-              name="inscricaoEstadual"
-              value={clientData.inscricaoEstadual || ''}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="name"
-              label="Nome do Cliente"
-              name="name"
-              value={clientData.name || ''}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="cep"
-              label="CEP"
-              name="cep"
-              value={clientData.cep || ''}
-              onChange={handleChange}
-              onBlur={handleCepBlur}
-              InputProps={{
-                inputComponent: CepMask as any,
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={8}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="logradouro"
-              label="Logradouro"
-              name="logradouro"
-              value={clientData.logradouro || ''}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="numero"
-              label="Número"
-              name="numero"
-              value={clientData.numero || ''}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={8}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="complemento"
-              label="Complemento"
-              name="complemento"
-              value={clientData.complemento || ''}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="bairro"
-              label="Bairro"
-              name="bairro"
-              value={clientData.bairro || ''}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="municipio"
-              label="Município"
-              name="municipio"
-              value={clientData.municipio || ''}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={2}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="uf"
-              label="UF"
-              name="uf"
-              value={clientData.uf || ''}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              margin="normal"
-              fullWidth
-              id="telefone"
-              label="Telefone"
-              name="telefone"
-              value={clientData.telefone || ''}
-              onChange={handleChange}
-            />
-          </Grid>
+    <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
+      <Grid container spacing={2}>
+        <Grid xs={12} sm={6}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="cnpj"
+            label="CNPJ"
+            name="cnpj"
+            value={clientData.cnpj || ''}
+            onChange={handleChange}
+            onBlur={handleCnpjBlur}
+            InputProps={{
+              inputComponent: CnpjMask as any,
+              endAdornment: lookupLoading.cnpj ? <CircularProgress size={20} /> : null,
+            }}
+            disabled={isSaving}
+          />
         </Grid>
-        <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-          Save Client
+        <Grid xs={12} sm={6}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="inscricaoEstadual"
+            label="Inscrição Estadual"
+            name="inscricaoEstadual"
+            value={clientData.inscricaoEstadual || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="name"
+            label="Nome do Cliente"
+            name="name"
+            value={clientData.name || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12} sm={4}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="cep"
+            label="CEP"
+            name="cep"
+            value={clientData.cep || ''}
+            onChange={handleChange}
+            onBlur={handleCepBlur}
+            InputProps={{
+              inputComponent: CepMask as any,
+              endAdornment: lookupLoading.cep ? <CircularProgress size={20} /> : null,
+            }}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12} sm={8}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="logradouro"
+            label="Logradouro"
+            name="logradouro"
+            value={clientData.logradouro || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12} sm={4}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="numero"
+            label="Número"
+            name="numero"
+            value={clientData.numero || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12} sm={8}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="complemento"
+            label="Complemento"
+            name="complemento"
+            value={clientData.complemento || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12} sm={6}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="bairro"
+            label="Bairro"
+            name="bairro"
+            value={clientData.bairro || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12} sm={4}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="municipio"
+            label="Município"
+            name="municipio"
+            value={clientData.municipio || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12} sm={2}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="uf"
+            label="UF"
+            name="uf"
+            value={clientData.uf || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+        <Grid xs={12} sm={6}>
+          <TextField
+            margin="normal"
+            fullWidth
+            id="telefone"
+            label="Telefone"
+            name="telefone"
+            value={clientData.telefone || ''}
+            onChange={handleChange}
+            disabled={isSaving}
+          />
+        </Grid>
+      </Grid>
+      <Box sx={{ mt: 3, position: 'relative' }}>
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          disabled={isSaving}
+        >
+          {clientToEdit ? 'Save Changes' : 'Create Client'}
         </Button>
+        {isSaving && (
+          <CircularProgress
+            size={24}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              marginTop: '-12px',
+              marginLeft: '-12px',
+            }}
+          />
+        )}
       </Box>
-    </Modal>
+      <Snackbar open={!!lookupError} autoHideDuration={6000} onClose={() => setLookupError('')}>
+        <Alert onClose={() => setLookupError('')} severity="warning" sx={{ width: '100%' }}>
+          {lookupError}
+        </Alert>
+      </Snackbar>
+    </Paper>
   );
 };
 
