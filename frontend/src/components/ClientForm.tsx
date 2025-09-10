@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Box, Modal, Typography, Grid } from '@mui/material';
+import { Button, TextField, Box, Modal, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Client, ClientContact } from '../services/clientService';
 
 interface ClientFormProps {

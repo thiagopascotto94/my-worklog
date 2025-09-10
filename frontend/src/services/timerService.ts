@@ -15,6 +15,7 @@ export interface WorkSession {
   lastPausedTime: string | null;
   totalPausedSeconds: number;
   hourlyRate: number | null;
+  totalEarned?: number;
   tags: string | null;
   clientId: number;
   userId: number;

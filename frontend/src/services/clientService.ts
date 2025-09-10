@@ -1,13 +1,13 @@
 import api from './api';
 
 export interface ClientContact {
-  id: number;
+  id?: number;
   name: string;
   email: string;
   phone: string;
-  clientId: number;
-  createdAt: string;
-  updatedAt: string;
+  clientId?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Client {
