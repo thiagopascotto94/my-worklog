@@ -13,15 +13,16 @@ const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [searchValue, setSearchValue] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
 
   const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      const { data } = await clientService.getClients({ search, page, limit: 10 });
+      const { data } = await clientService.getClients({ search: submittedSearch, page, limit: 10 });
       setClients(data.clients);
       setTotalPages(data.totalPages);
     } catch (err: any) {
@@ -29,7 +30,7 @@ const ClientsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, page]);
+  }, [submittedSearch, page]);
 
   useEffect(() => {
     fetchClients();
@@ -47,8 +48,12 @@ const ClientsPage: React.FC = () => {
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
-    setPage(1); // Reset to first page on new search
+    setSearchValue(event.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    setPage(1);
+    setSubmittedSearch(searchValue);
   };
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
@@ -66,14 +71,15 @@ const ClientsPage: React.FC = () => {
         </Button>
       </Box>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, gap: 1 }}>
         <TextField
           label="Search by Name, CNPJ, or City"
           variant="outlined"
-          value={search}
+          value={searchValue}
           onChange={handleSearchChange}
           sx={{ width: '300px' }}
         />
+        <Button variant="contained" onClick={handleSearchSubmit}>Search</Button>
       </Box>
 
       {loading && <CircularProgress />}

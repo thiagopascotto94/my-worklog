@@ -46,9 +46,9 @@ exports.getAllClients = async (req, res) => {
     let whereClause = { userId };
     if (search) {
       whereClause[Op.or] = [
-        { name: { [Op.iLike]: `%${search}%` } },
-        { cnpj: { [Op.iLike]: `%${search}%` } },
-        { municipio: { [Op.iLike]: `%${search}%` } },
+        { name: { [Op.like]: `%${search}%` } },
+        { cnpj: { [Op.like]: `%${search}%` } },
+        { municipio: { [Op.like]: `%${search}%` } },
       ];
     }
 
