@@ -41,12 +41,12 @@ const ClientsPage: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const handleSave = async (name: string, id?: number) => {
+  const handleSave = async (clientData: Partial<clientService.Client>, id?: number) => {
     try {
       if (id) {
-        await clientService.updateClient(id, name);
+        await clientService.updateClient(id, clientData);
       } else {
-        await clientService.createClient(name);
+        await clientService.createClient(clientData);
       }
       handleCloseModal();
       fetchClients(); // Refetch clients after saving

@@ -1,11 +1,8 @@
-const { Client } = require('../models');
+const { Client, ClientContact } = require('../models');
 
-// @route   POST api/clients
-// @desc    Create a client
-// @access  Private
 exports.createClient = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, contacts } = req.body;
     const userId = req.user.userId;
 
     if (!name) {
@@ -17,34 +14,45 @@ exports.createClient = async (req, res) => {
       userId,
     });
 
-    res.status(201).json(newClient);
+    if (contacts && contacts.length > 0) {
+      await ClientContact.create({
+        ...contacts[0],
+        clientId: newClient.id,
+      });
+    }
+
+    const clientWithContacts = await Client.findByPk(newClient.id, {
+      include: ['contacts']
+    });
+
+    res.status(201).json(clientWithContacts);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// @route   GET api/clients
-// @desc    Get all clients for a user
-// @access  Private
 exports.getAllClients = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const clients = await Client.findAll({ where: { userId } });
+    const clients = await Client.findAll({
+      where: { userId },
+      include: ['contacts'],
+    });
     res.status(200).json(clients);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// @route   GET api/clients/:id
-// @desc    Get a single client by ID
-// @access  Private
 exports.getClientById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
 
-    const client = await Client.findOne({ where: { id, userId } });
+    const client = await Client.findOne({
+      where: { id, userId },
+      include: ['contacts'],
+    });
 
     if (!client) {
       return res.status(404).json({ message: 'Client not found.' });
@@ -56,13 +64,10 @@ exports.getClientById = async (req, res) => {
   }
 };
 
-// @route   PUT api/clients/:id
-// @desc    Update a client
-// @access  Private
 exports.updateClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, contacts } = req.body;
     const userId = req.user.userId;
 
     const client = await Client.findOne({ where: { id, userId } });
@@ -71,10 +76,26 @@ exports.updateClient = async (req, res) => {
       return res.status(404).json({ message: 'Client not found.' });
     }
 
-    client.name = name || client.name; // Only update name if provided
+    client.name = name || client.name;
     await client.save();
 
-    res.status(200).json(client);
+    if (contacts && contacts.length > 0) {
+      const contactData = contacts[0];
+      let contact = await ClientContact.findOne({ where: { clientId: id } });
+
+      if (contact) {
+        contact.name = contactData.name || contact.name;
+        contact.email = contactData.email || contact.email;
+        contact.phone = contactData.phone || contact.phone;
+        await contact.save();
+      } else {
+        await ClientContact.create({ ...contactData, clientId: id });
+      }
+    }
+
+    const updatedClient = await Client.findByPk(id, { include: ['contacts'] });
+
+    res.status(200).json(updatedClient);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
