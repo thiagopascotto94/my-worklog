@@ -128,7 +128,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
   return (
     <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
       <Grid container spacing={2}>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             margin="normal"
             fullWidth
@@ -145,7 +145,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             margin="normal"
             fullWidth
@@ -157,7 +157,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid item xs={12}>
           <TextField
             margin="normal"
             required
@@ -170,7 +170,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={4}>
+        <Grid item xs={12} sm={4}>
           <TextField
             margin="normal"
             fullWidth
@@ -187,7 +187,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={8}>
+        <Grid item xs={12} sm={8}>
           <TextField
             margin="normal"
             fullWidth
@@ -199,7 +199,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={4}>
+        <Grid item xs={12} sm={4}>
           <TextField
             margin="normal"
             fullWidth
@@ -211,7 +211,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={8}>
+        <Grid item xs={12} sm={8}>
           <TextField
             margin="normal"
             fullWidth
@@ -223,7 +223,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             margin="normal"
             fullWidth
@@ -235,7 +235,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={4}>
+        <Grid item xs={12} sm={4}>
           <TextField
             margin="normal"
             fullWidth
@@ -247,7 +247,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={2}>
+        <Grid item xs={12} sm={2}>
           <TextField
             margin="normal"
             fullWidth
@@ -259,7 +259,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
             disabled={isSaving}
           />
         </Grid>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextField
             margin="normal"
             fullWidth

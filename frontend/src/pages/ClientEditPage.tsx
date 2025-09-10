@@ -64,7 +64,7 @@ const ClientEditPage: React.FC = () => {
         </Box>
       )}
 
-      {!loading && client && <ClientForm onSave={handleSave} clientToEdit={client} />}
+      {!loading && client && <ClientForm onSave={handleSave} clientToEdit={client} isSaving={loading} />}
 
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
         <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>

@@ -36,7 +36,7 @@ const ClientCreatePage: React.FC = () => {
         </Button>
       </Box>
 
-      <ClientForm onSave={handleSave} clientToEdit={null} />
+      <ClientForm onSave={handleSave} clientToEdit={null} isSaving={loading} />
 
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
