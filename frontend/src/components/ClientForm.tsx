@@ -1,5 +1,5 @@
 import React, { useState, useEffect, forwardRef } from 'react';
-import { Button, TextField, Box, Typography, Grid, Paper, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { Button, TextField, Box, Typography, Grid, Paper, CircularProgress, Snackbar, Alert, Divider } from '@mui/material';
 import { Client, getCnpjData, getCepData } from '../services/clientService';
 import { IMaskInput } from 'react-imask';
 
@@ -126,157 +126,173 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
   };
 
   return (
-    <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="cnpj"
-            label="CNPJ"
-            name="cnpj"
-            value={clientData.cnpj || ''}
-            onChange={handleChange}
-            onBlur={handleCnpjBlur}
-            InputProps={{
-              inputComponent: CnpjMask as any,
-              endAdornment: lookupLoading.cnpj ? <CircularProgress size={20} /> : null,
-            }}
-            disabled={isSaving}
-          />
+    <Paper component="form" onSubmit={handleSubmit} sx={{ p: 3, mt: 2 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Informações da Empresa
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              id="cnpj"
+              label="CNPJ"
+              name="cnpj"
+              value={clientData.cnpj || ''}
+              onChange={handleChange}
+              onBlur={handleCnpjBlur}
+              InputProps={{
+                inputComponent: CnpjMask as any,
+                endAdornment: lookupLoading.cnpj ? <CircularProgress size={20} /> : null,
+              }}
+              disabled={isSaving}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              id="inscricaoEstadual"
+              label="Inscrição Estadual"
+              name="inscricaoEstadual"
+              value={clientData.inscricaoEstadual || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              required
+              fullWidth
+              id="name"
+              label="Nome do Cliente"
+              name="name"
+              value={clientData.name || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="inscricaoEstadual"
-            label="Inscrição Estadual"
-            name="inscricaoEstadual"
-            value={clientData.inscricaoEstadual || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Endereço
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              id="cep"
+              label="CEP"
+              name="cep"
+              value={clientData.cep || ''}
+              onChange={handleChange}
+              onBlur={handleCepBlur}
+              InputProps={{
+                inputComponent: CepMask as any,
+                endAdornment: lookupLoading.cep ? <CircularProgress size={20} /> : null,
+              }}
+              disabled={isSaving}
+            />
+          </Grid>
+          <Grid item xs={12} sm={8}>
+            <TextField
+              fullWidth
+              id="logradouro"
+              label="Logradouro"
+              name="logradouro"
+              value={clientData.logradouro || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              id="numero"
+              label="Número"
+              name="numero"
+              value={clientData.numero || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
+          <Grid item xs={12} sm={8}>
+            <TextField
+              fullWidth
+              id="complemento"
+              label="Complemento"
+              name="complemento"
+              value={clientData.complemento || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              id="bairro"
+              label="Bairro"
+              name="bairro"
+              value={clientData.bairro || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              id="municipio"
+              label="Município"
+              name="municipio"
+              value={clientData.municipio || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <TextField
+              fullWidth
+              id="uf"
+              label="UF"
+              name="uf"
+              value={clientData.uf || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="name"
-            label="Nome do Cliente"
-            name="name"
-            value={clientData.name || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
+      </Box>
+
+      <Divider sx={{ my: 3 }} />
+
+      <Box>
+        <Typography variant="h6" gutterBottom>
+          Contato
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              id="telefone"
+              label="Telefone"
+              name="telefone"
+              value={clientData.telefone || ''}
+              onChange={handleChange}
+              disabled={isSaving}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="cep"
-            label="CEP"
-            name="cep"
-            value={clientData.cep || ''}
-            onChange={handleChange}
-            onBlur={handleCepBlur}
-            InputProps={{
-              inputComponent: CepMask as any,
-              endAdornment: lookupLoading.cep ? <CircularProgress size={20} /> : null,
-            }}
-            disabled={isSaving}
-          />
-        </Grid>
-        <Grid item xs={12} sm={8}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="logradouro"
-            label="Logradouro"
-            name="logradouro"
-            value={clientData.logradouro || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="numero"
-            label="Número"
-            name="numero"
-            value={clientData.numero || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
-        </Grid>
-        <Grid item xs={12} sm={8}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="complemento"
-            label="Complemento"
-            name="complemento"
-            value={clientData.complemento || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="bairro"
-            label="Bairro"
-            name="bairro"
-            value={clientData.bairro || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="municipio"
-            label="Município"
-            name="municipio"
-            value={clientData.municipio || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
-        </Grid>
-        <Grid item xs={12} sm={2}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="uf"
-            label="UF"
-            name="uf"
-            value={clientData.uf || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="telefone"
-            label="Telefone"
-            name="telefone"
-            value={clientData.telefone || ''}
-            onChange={handleChange}
-            disabled={isSaving}
-          />
-        </Grid>
-      </Grid>
-      <Box sx={{ mt: 3, position: 'relative' }}>
+      </Box>
+
+      <Box sx={{ mt: 4, position: 'relative' }}>
         <Button
           type="submit"
           fullWidth
           variant="contained"
+          size="large"
           disabled={isSaving}
         >
           {clientToEdit ? 'Save Changes' : 'Create Client'}
