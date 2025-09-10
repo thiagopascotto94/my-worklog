@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Container, Typography, Button, Box,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert,
+  TextField, Pagination
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import * as clientService from '../services/clientService';
@@ -12,19 +13,23 @@ const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
 
   const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      const response = await clientService.getClients();
-      setClients(response.data);
+      const { data } = await clientService.getClients({ search, page, limit: 10 });
+      setClients(data.clients);
+      setTotalPages(data.totalPages);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch clients.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [search, page]);
 
   useEffect(() => {
     fetchClients();
@@ -41,6 +46,15 @@ const ClientsPage: React.FC = () => {
     }
   };
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
+    setPage(1); // Reset to first page on new search
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
   return (
     <Container>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4, mb: 2 }}>
@@ -52,36 +66,61 @@ const ClientsPage: React.FC = () => {
         </Button>
       </Box>
 
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <TextField
+          label="Search by Name, CNPJ, or City"
+          variant="outlined"
+          value={search}
+          onChange={handleSearchChange}
+          sx={{ width: '300px' }}
+        />
+      </Box>
+
       {loading && <CircularProgress />}
       {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
-      {!loading && !error && (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>CNPJ</TableCell>
-                <TableCell>Telefone</TableCell>
-                <TableCell>Created At</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {clients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell>{client.name}</TableCell>
-                  <TableCell>{client.cnpj}</TableCell>
-                  <TableCell>{client.telefone}</TableCell>
-                  <TableCell>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Button size="small" sx={{ mr: 1 }} onClick={() => navigate(`/clients/edit/${client.id}`)}>Edit</Button>
-                    <Button size="small" color="error" onClick={() => handleDelete(client.id)}>Delete</Button>
-                  </TableCell>
+
+      {!loading && !error && clients.length > 0 && (
+        <>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>CNPJ</TableCell>
+                  <TableCell>City</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {clients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell>{client.name}</TableCell>
+                    <TableCell>{client.cnpj}</TableCell>
+                    <TableCell>{client.municipio}</TableCell>
+                    <TableCell>{client.telefone}</TableCell>
+                    <TableCell>
+                      <Button size="small" sx={{ mr: 1 }} onClick={() => navigate(`/clients/edit/${client.id}`)}>Edit</Button>
+                      <Button size="small" color="error" onClick={() => handleDelete(client.id)}>Delete</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Box>
+        </>
+      )}
+
+      {!loading && !error && clients.length === 0 && (
+        <Typography>No clients found.</Typography>
       )}
     </Container>
   );
