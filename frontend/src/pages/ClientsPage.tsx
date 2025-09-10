@@ -3,16 +3,15 @@ import {
   Container, Typography, Button, Box,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import * as clientService from '../services/clientService';
 import { Client } from '../services/clientService';
-import ClientForm from '../components/ClientForm';
 
 const ClientsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
 
   const fetchClients = useCallback(async () => {
     try {
@@ -31,30 +30,6 @@ const ClientsPage: React.FC = () => {
     fetchClients();
   }, [fetchClients]);
 
-  const handleOpenModal = (client: Client | null = null) => {
-    setClientToEdit(client);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setClientToEdit(null);
-    setIsModalOpen(false);
-  };
-
-  const handleSave = async (name: string, id?: number) => {
-    try {
-      if (id) {
-        await clientService.updateClient(id, name);
-      } else {
-        await clientService.createClient(name);
-      }
-      handleCloseModal();
-      fetchClients(); // Refetch clients after saving
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save client.');
-    }
-  };
-
   const handleDelete = async (id: number) => {
     try {
       if (window.confirm('Are you sure you want to delete this client?')) {
@@ -72,7 +47,7 @@ const ClientsPage: React.FC = () => {
         <Typography variant="h4">
           My Clients
         </Typography>
-        <Button variant="contained" onClick={() => handleOpenModal()}>
+        <Button variant="contained" onClick={() => navigate('/clients/new')}>
           Add New Client
         </Button>
       </Box>
@@ -85,6 +60,8 @@ const ClientsPage: React.FC = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
+                <TableCell>CNPJ</TableCell>
+                <TableCell>Telefone</TableCell>
                 <TableCell>Created At</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
@@ -93,9 +70,11 @@ const ClientsPage: React.FC = () => {
               {clients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell>{client.name}</TableCell>
+                  <TableCell>{client.cnpj}</TableCell>
+                  <TableCell>{client.telefone}</TableCell>
                   <TableCell>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Button size="small" sx={{ mr: 1 }} onClick={() => handleOpenModal(client)}>Edit</Button>
+                    <Button size="small" sx={{ mr: 1 }} onClick={() => navigate(`/clients/edit/${client.id}`)}>Edit</Button>
                     <Button size="small" color="error" onClick={() => handleDelete(client.id)}>Delete</Button>
                   </TableCell>
                 </TableRow>
@@ -104,13 +83,6 @@ const ClientsPage: React.FC = () => {
           </Table>
         </TableContainer>
       )}
-
-      <ClientForm
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSave}
-        clientToEdit={clientToEdit}
-      />
     </Container>
   );
 };

@@ -19,6 +19,7 @@ export interface WorkSession {
   clientId: number;
   userId: number;
   tasks: SessionTask[];
+  totalEarned?: number;
 }
 
 export const getActiveSession = (): Promise<{ data: WorkSession | null }> => {

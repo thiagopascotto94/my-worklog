@@ -1,11 +1,12 @@
 const { Client } = require('../models');
+const { getCnpjData, getCepData } = require('../services/externalApiService');
 
 // @route   POST api/clients
 // @desc    Create a client
 // @access  Private
 exports.createClient = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, cnpj, inscricaoEstadual, cep, logradouro, numero, complemento, bairro, municipio, uf, telefone } = req.body;
     const userId = req.user.userId;
 
     if (!name) {
@@ -15,6 +16,16 @@ exports.createClient = async (req, res) => {
     const newClient = await Client.create({
       name,
       userId,
+      cnpj,
+      inscricaoEstadual,
+      cep,
+      logradouro,
+      numero,
+      complemento,
+      bairro,
+      municipio,
+      uf,
+      telefone,
     });
 
     res.status(201).json(newClient);
@@ -62,7 +73,7 @@ exports.getClientById = async (req, res) => {
 exports.updateClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, cnpj, inscricaoEstadual, cep, logradouro, numero, complemento, bairro, municipio, uf, telefone } = req.body;
     const userId = req.user.userId;
 
     const client = await Client.findOne({ where: { id, userId } });
@@ -71,7 +82,18 @@ exports.updateClient = async (req, res) => {
       return res.status(404).json({ message: 'Client not found.' });
     }
 
-    client.name = name || client.name; // Only update name if provided
+    client.name = name || client.name;
+    client.cnpj = cnpj || client.cnpj;
+    client.inscricaoEstadual = inscricaoEstadual || client.inscricaoEstadual;
+    client.cep = cep || client.cep;
+    client.logradouro = logradouro || client.logradouro;
+    client.numero = numero || client.numero;
+    client.complemento = complemento || client.complemento;
+    client.bairro = bairro || client.bairro;
+    client.municipio = municipio || client.municipio;
+    client.uf = uf || client.uf;
+    client.telefone = telefone || client.telefone;
+
     await client.save();
 
     res.status(200).json(client);
@@ -97,6 +119,32 @@ exports.deleteClient = async (req, res) => {
     await client.destroy();
 
     res.status(200).json({ message: 'Client deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @route   GET api/clients/cnpj/:cnpj
+// @desc    Get CNPJ data from ReceitaWS
+// @access  Private
+exports.getClientByCnpj = async (req, res) => {
+  try {
+    const { cnpj } = req.params;
+    const data = await getCnpjData(cnpj);
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @route   GET api/clients/cep/:cep
+// @desc    Get CEP data from ViaCEP
+// @access  Private
+exports.getClientByCep = async (req, res) => {
+  try {
+    const { cep } = req.params;
+    const data = await getCepData(cep);
+    res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
