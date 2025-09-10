@@ -1,5 +1,6 @@
 import React, { useState, useEffect, forwardRef } from 'react';
-import { Button, TextField, Box, Typography, Grid, Paper, CircularProgress, Snackbar, Alert, Divider } from '@mui/material';
+import { Button, TextField, Box, Typography, Paper, CircularProgress, Snackbar, Alert, Divider } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Client, getCnpjData, getCepData } from '../services/clientService';
 import { IMaskInput } from 'react-imask';
 

@@ -20,10 +20,10 @@ const Timer: React.FC = () => {
         setLoading(true);
         const [sessionRes, clientsRes] = await Promise.all([
           timerService.getActiveSession(),
-          clientService.getClients()
+          clientService.getClients({})
         ]);
         setSession(sessionRes.data);
-        setClients(clientsRes.data);
+        setClients(clientsRes.data.clients);
         if (sessionRes.data) {
           setSelectedClient(sessionRes.data.clientId);
         }
