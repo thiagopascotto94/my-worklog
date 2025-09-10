@@ -36,7 +36,8 @@ const ClientsPage: React.FC = () => {
         await clientService.deleteClient(id);
         fetchClients(); // Refetch clients after deleting
       }
-    } catch (err: any)      setError(err.response?.data?.message || 'Failed to delete client.');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to delete client.');
     }
   };
 
