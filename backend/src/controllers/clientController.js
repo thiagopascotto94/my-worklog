@@ -1,5 +1,6 @@
-const { Client } = require('../models');
+const { Client, Sequelize } = require('../models');
 const { getCnpjData, getCepData } = require('../services/externalApiService');
+const { Op } = Sequelize;
 
 // @route   POST api/clients
 // @desc    Create a client
@@ -35,13 +36,37 @@ exports.createClient = async (req, res) => {
 };
 
 // @route   GET api/clients
-// @desc    Get all clients for a user
+// @desc    Get all clients for a user with search, pagination
 // @access  Private
 exports.getAllClients = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const clients = await Client.findAll({ where: { userId } });
-    res.status(200).json(clients);
+    const { search, page = 1, limit = 10 } = req.query;
+
+    let whereClause = { userId };
+    if (search) {
+      whereClause[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { cnpj: { [Op.like]: `%${search}%` } },
+        { municipio: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Client.findAndCountAll({
+      where: whereClause,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['name', 'ASC']],
+    });
+
+    res.status(200).json({
+      clients: rows,
+      totalPages: Math.ceil(count / limit),
+      currentPage: parseInt(page),
+      totalClients: count,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

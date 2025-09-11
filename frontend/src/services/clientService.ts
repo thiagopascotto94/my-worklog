@@ -19,8 +19,21 @@ export interface Client {
   telefone?: string;
 }
 
-export const getClients = (): Promise<{ data: Client[] }> => {
-  return api.get('/clients');
+export interface GetClientsParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ClientsResponse {
+  clients: Client[];
+  totalPages: number;
+  currentPage: number;
+  totalClients: number;
+}
+
+export const getClients = (params: GetClientsParams): Promise<{ data: ClientsResponse }> => {
+  return api.get('/clients', { params });
 };
 
 export const getClientById = (id: number): Promise<{ data: Client }> => {
