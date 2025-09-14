@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, TextField, Checkbox, IconButton, List, ListItem, ListItemText, Collapse, Paper, Tooltip, FormControl, InputLabel, Select, MenuItem, Autocomplete, CircularProgress } from '@mui/material';
+import { Box, Button, Typography, TextField, Checkbox, IconButton, List, ListItem, ListItemText, Collapse, Paper, Tooltip } from '@mui/material';
 import { Edit, Delete, Comment } from '@mui/icons-material';
 import * as taskService from '../services/taskService';
 import { Task } from '../services/taskService';
+import TaskAutocomplete from './TaskAutocomplete';
 
 interface TaskListProps {
   workSessionId: number;
@@ -10,16 +11,11 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [new_allTasks, new_setAllTasks] = useState<Task[]>([]);
-  const [edit_allTasks, edit_setAllTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newContinuedFromTaskId, setNewContinuedFromTaskId] = useState<number | ''>('');
+  const [newContinuedFromTask, setNewContinuedFromTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [openObservations, setOpenObservations] = useState<number | null>(null);
-  const [new_autocompleteOpen, new_setAutocompleteOpen] = useState(false);
-  const [new_autocompleteLoading, new_setAutocompleteLoading] = useState(false);
-  const [edit_autocompleteOpen, edit_setAutocompleteOpen] = useState(false);
-  const [edit_autocompleteLoading, edit_setAutocompleteLoading] = useState(false);
+  const [editingInitialTask, setEditingInitialTask] = useState<Task | null>(null);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -34,16 +30,26 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
     fetchTasks();
   }, [fetchTasks]);
 
+  useEffect(() => {
+    if (editingTask && editingTask.continuedFromTaskId) {
+      taskService.getTaskById(editingTask.continuedFromTaskId)
+        .then(res => setEditingInitialTask(res.data))
+        .catch(err => console.error('Failed to fetch initial continued task', err));
+    } else {
+      setEditingInitialTask(null);
+    }
+  }, [editingTask]);
+
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
     try {
       await taskService.createTask({
         workSessionId,
         title: newTaskTitle,
-        continuedFromTaskId: newContinuedFromTaskId || undefined,
+        continuedFromTaskId: newContinuedFromTask ? newContinuedFromTask.id : undefined,
       });
       setNewTaskTitle('');
-      setNewContinuedFromTaskId('');
+      setNewContinuedFromTask(null);
       fetchTasks();
     } catch (error) {
       console.error('Failed to create task', error);
@@ -156,55 +162,16 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
             onChange={(e) => setEditingTask({ ...task, observations: e.target.value })}
             sx={{ mb: 1 }}
         />
-        <Autocomplete
-          id="continued-from-task-autocomplete"
-          open={edit_autocompleteOpen}
-          onOpen={() => {
-            edit_setAutocompleteOpen(true);
-          }}
-          onClose={() => {
-            edit_setAutocompleteOpen(false);
-          }}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          getOptionLabel={(option) => option.title}
-          options={edit_allTasks}
-          loading={edit_autocompleteLoading}
-          value={edit_allTasks.find(t => t.id === task.continuedFromTaskId) || null}
-          onChange={(event, newValue) => {
+        <TaskAutocomplete
+          label="Continue from task"
+          value={editingInitialTask}
+          onChange={(newValue) => {
             setEditingTask({ ...task, continuedFromTaskId: newValue ? newValue.id : undefined });
+            setEditingInitialTask(newValue);
           }}
-          onInputChange={async (event, newInputValue) => {
-            if (newInputValue.length >= 3) {
-              edit_setAutocompleteLoading(true);
-              try {
-                const res = await taskService.getAllTasks(newInputValue);
-                edit_setAllTasks(res.data);
-              } catch (error) {
-                console.error('Failed to fetch tasks for autocomplete', error);
-              } finally {
-                edit_setAutocompleteLoading(false);
-              }
-            } else {
-                edit_setAllTasks([]);
-            }
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Continue from task"
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>
-                    {edit_autocompleteLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
-              }}
-            />
-          )}
+          disabledIds={[task.id]}
         />
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
             <Button onClick={() => setEditingTask(null)}>Cancel</Button>
             <Button variant="contained" onClick={() => handleUpdateTask(task)}>Save</Button>
         </Box>
@@ -224,52 +191,10 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
           onChange={(e) => setNewTaskTitle(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleCreateTask()}
         />
-        <Autocomplete
-          id="new-continued-from-task-autocomplete"
-          open={new_autocompleteOpen}
-          onOpen={() => {
-            new_setAutocompleteOpen(true);
-          }}
-          onClose={() => {
-            new_setAutocompleteOpen(false);
-          }}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          getOptionLabel={(option) => option.title}
-          options={new_allTasks}
-          loading={new_autocompleteLoading}
-          onChange={(event, newValue) => {
-            setNewContinuedFromTaskId(newValue ? newValue.id : '');
-          }}
-          onInputChange={async (event, newInputValue) => {
-            if (newInputValue.length >= 3) {
-              new_setAutocompleteLoading(true);
-              try {
-                const res = await taskService.getAllTasks(newInputValue);
-                new_setAllTasks(res.data);
-              } catch (error) {
-                console.error('Failed to fetch tasks for autocomplete', error);
-              } finally {
-                new_setAutocompleteLoading(false);
-              }
-            } else {
-                new_setAllTasks([]);
-            }
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Continue from task"
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>
-                    {new_autocompleteLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
-              }}
-            />
-          )}
+        <TaskAutocomplete
+          label="Continue from task"
+          value={newContinuedFromTask}
+          onChange={setNewContinuedFromTask}
         />
         <Button variant="contained" onClick={handleCreateTask}>Add</Button>
       </Box>
