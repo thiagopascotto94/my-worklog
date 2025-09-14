@@ -22,6 +22,10 @@ export const getAllTasks = (search?: string): Promise<{ data: Task[] }> => {
   return api.get('/tasks', { params: { search } });
 };
 
+export const getTaskById = (id: number): Promise<{ data: Task }> => {
+  return api.get(`/tasks/${id}`);
+};
+
 export const createTask = (taskData: Partial<Task>): Promise<{ data: Task }> => {
   return api.post('/tasks', taskData);
 };

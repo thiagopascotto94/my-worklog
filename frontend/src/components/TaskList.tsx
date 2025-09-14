@@ -34,7 +34,7 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
     if (editingTask && editingTask.continuedFromTaskId) {
       taskService.getTaskById(editingTask.continuedFromTaskId)
         .then(res => setEditingInitialTask(res.data))
-        .catch(err => console.error('Failed to fetch initial continued task', err));
+        .catch((err: any) => console.error('Failed to fetch initial continued task', err));
     } else {
       setEditingInitialTask(null);
     }
