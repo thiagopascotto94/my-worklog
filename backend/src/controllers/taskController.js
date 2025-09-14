@@ -1,4 +1,5 @@
 const { SessionTask, WorkSession } = require('../models');
+const { Op } = require('sequelize');
 
 // @route   POST api/tasks
 // @desc    Create a task for a work session
@@ -35,7 +36,18 @@ exports.createTask = async (req, res) => {
 exports.getAllTasks = async (req, res) => {
   try {
     const userId = req.user.userId;
+    const { search } = req.query;
+
+    if (!search || search.length < 3) {
+      return res.status(200).json([]);
+    }
+
     const tasks = await SessionTask.findAll({
+      where: {
+        title: {
+          [Op.like]: `%${search}%`
+        }
+      },
       include: [{
         model: WorkSession,
         as: 'workSession',

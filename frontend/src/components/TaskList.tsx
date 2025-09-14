@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, TextField, Checkbox, IconButton, List, ListItem, ListItemText, Collapse, Paper, Tooltip, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, Button, Typography, TextField, Checkbox, IconButton, List, ListItem, ListItemText, Collapse, Paper, Tooltip, FormControl, InputLabel, Select, MenuItem, Autocomplete, CircularProgress } from '@mui/material';
 import { Edit, Delete, Comment } from '@mui/icons-material';
 import * as taskService from '../services/taskService';
 import { Task } from '../services/taskService';
@@ -10,11 +10,16 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [new_allTasks, new_setAllTasks] = useState<Task[]>([]);
+  const [edit_allTasks, edit_setAllTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newContinuedFromTaskId, setNewContinuedFromTaskId] = useState<number | ''>('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [openObservations, setOpenObservations] = useState<number | null>(null);
+  const [new_autocompleteOpen, new_setAutocompleteOpen] = useState(false);
+  const [new_autocompleteLoading, new_setAutocompleteLoading] = useState(false);
+  const [edit_autocompleteOpen, edit_setAutocompleteOpen] = useState(false);
+  const [edit_autocompleteLoading, edit_setAutocompleteLoading] = useState(false);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -28,18 +33,6 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
-
-  useEffect(() => {
-    const fetchAllTasks = async () => {
-      try {
-        const res = await taskService.getAllTasks();
-        setAllTasks(res.data);
-      } catch (error) {
-        console.error('Failed to fetch all tasks', error);
-      }
-    };
-    fetchAllTasks();
-  }, []);
 
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
@@ -117,7 +110,7 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
         />
         <ListItemText
           primary={task.title}
-          secondary={task.continuedFromTask ? `Continues: ${task.continuedFromTask.title}` : ''}
+          secondary={task.continuedFromTask ? `Continues: ${task.continuedFromTask.title} (from ${new Date(task.continuedFromTask.createdAt).toLocaleDateString()})` : ''}
           sx={{ textDecoration: task.status === 'completed' ? 'line-through' : 'none' }}
         />
       </ListItem>
@@ -163,24 +156,54 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
             onChange={(e) => setEditingTask({ ...task, observations: e.target.value })}
             sx={{ mb: 1 }}
         />
-        <FormControl fullWidth sx={{ mb: 1 }}>
-          <InputLabel id="continued-from-task-label">Continue from task</InputLabel>
-          <Select
-            labelId="continued-from-task-label"
-            value={task.continuedFromTaskId || ''}
-            label="Continue from task"
-            onChange={(e) => setEditingTask({ ...task, continuedFromTaskId: e.target.value as number | undefined })}
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {allTasks.map((t) => (
-              <MenuItem key={t.id} value={t.id} disabled={t.id === task.id}>
-                {t.title}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          id="continued-from-task-autocomplete"
+          open={edit_autocompleteOpen}
+          onOpen={() => {
+            edit_setAutocompleteOpen(true);
+          }}
+          onClose={() => {
+            edit_setAutocompleteOpen(false);
+          }}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          getOptionLabel={(option) => option.title}
+          options={edit_allTasks}
+          loading={edit_autocompleteLoading}
+          value={edit_allTasks.find(t => t.id === task.continuedFromTaskId) || null}
+          onChange={(event, newValue) => {
+            setEditingTask({ ...task, continuedFromTaskId: newValue ? newValue.id : undefined });
+          }}
+          onInputChange={async (event, newInputValue) => {
+            if (newInputValue.length >= 3) {
+              edit_setAutocompleteLoading(true);
+              try {
+                const res = await taskService.getAllTasks(newInputValue);
+                edit_setAllTasks(res.data);
+              } catch (error) {
+                console.error('Failed to fetch tasks for autocomplete', error);
+              } finally {
+                edit_setAutocompleteLoading(false);
+              }
+            } else {
+                edit_setAllTasks([]);
+            }
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Continue from task"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {edit_autocompleteLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
             <Button onClick={() => setEditingTask(null)}>Cancel</Button>
             <Button variant="contained" onClick={() => handleUpdateTask(task)}>Save</Button>
@@ -201,24 +224,53 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
           onChange={(e) => setNewTaskTitle(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleCreateTask()}
         />
-        <FormControl fullWidth size="small">
-          <InputLabel id="new-continued-from-task-label">Continue from task</InputLabel>
-          <Select
-            labelId="new-continued-from-task-label"
-            value={newContinuedFromTaskId}
-            label="Continue from task"
-            onChange={(e) => setNewContinuedFromTaskId(e.target.value as number)}
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {allTasks.map((t) => (
-              <MenuItem key={t.id} value={t.id}>
-                {t.title}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          id="new-continued-from-task-autocomplete"
+          open={new_autocompleteOpen}
+          onOpen={() => {
+            new_setAutocompleteOpen(true);
+          }}
+          onClose={() => {
+            new_setAutocompleteOpen(false);
+          }}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          getOptionLabel={(option) => option.title}
+          options={new_allTasks}
+          loading={new_autocompleteLoading}
+          onChange={(event, newValue) => {
+            setNewContinuedFromTaskId(newValue ? newValue.id : '');
+          }}
+          onInputChange={async (event, newInputValue) => {
+            if (newInputValue.length >= 3) {
+              new_setAutocompleteLoading(true);
+              try {
+                const res = await taskService.getAllTasks(newInputValue);
+                new_setAllTasks(res.data);
+              } catch (error) {
+                console.error('Failed to fetch tasks for autocomplete', error);
+              } finally {
+                new_setAutocompleteLoading(false);
+              }
+            } else {
+                new_setAllTasks([]);
+            }
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Continue from task"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {new_autocompleteLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
         <Button variant="contained" onClick={handleCreateTask}>Add</Button>
       </Box>
       <List>

@@ -18,8 +18,8 @@ export const getTasksForSession = (workSessionId: number): Promise<{ data: Task[
   return api.get(`/tasks/session/${workSessionId}`);
 };
 
-export const getAllTasks = (): Promise<{ data: Task[] }> => {
-  return api.get('/tasks');
+export const getAllTasks = (search?: string): Promise<{ data: Task[] }> => {
+  return api.get('/tasks', { params: { search } });
 };
 
 export const createTask = (taskData: Partial<Task>): Promise<{ data: Task }> => {
