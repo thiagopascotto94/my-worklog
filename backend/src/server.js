@@ -24,6 +24,9 @@ app.use('/api/timer', timerRoutes);
 const reportRoutes = require('./routes/reportRoutes');
 app.use('/api/reports', reportRoutes);
 
+const taskRoutes = require('./routes/taskRoutes');
+app.use('/api/tasks', taskRoutes);
+
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {

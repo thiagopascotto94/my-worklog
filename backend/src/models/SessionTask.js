@@ -18,7 +18,11 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   SessionTask.init({
+    title: DataTypes.TEXT,
     description: DataTypes.TEXT,
+    status: DataTypes.STRING,
+    tags: DataTypes.TEXT,
+    observations: DataTypes.TEXT,
     workSessionId: DataTypes.INTEGER
   }, {
     sequelize,
