@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, TextField, Checkbox, IconButton, List, ListItem, ListItemText, Collapse, Paper, Tooltip } from '@mui/material';
+import { Box, Button, Typography, TextField, Checkbox, IconButton, List, ListItem, ListItemText, Collapse, Paper, Tooltip, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Edit, Delete, Comment } from '@mui/icons-material';
 import * as taskService from '../services/taskService';
 import { Task } from '../services/taskService';
@@ -10,7 +10,9 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newContinuedFromTaskId, setNewContinuedFromTaskId] = useState<number | ''>('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [openObservations, setOpenObservations] = useState<number | null>(null);
 
@@ -27,11 +29,28 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
     fetchTasks();
   }, [fetchTasks]);
 
+  useEffect(() => {
+    const fetchAllTasks = async () => {
+      try {
+        const res = await taskService.getAllTasks();
+        setAllTasks(res.data);
+      } catch (error) {
+        console.error('Failed to fetch all tasks', error);
+      }
+    };
+    fetchAllTasks();
+  }, []);
+
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
     try {
-      await taskService.createTask({ workSessionId, title: newTaskTitle });
+      await taskService.createTask({
+        workSessionId,
+        title: newTaskTitle,
+        continuedFromTaskId: newContinuedFromTaskId || undefined,
+      });
       setNewTaskTitle('');
+      setNewContinuedFromTaskId('');
       fetchTasks();
     } catch (error) {
       console.error('Failed to create task', error);
@@ -96,7 +115,11 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
           disableRipple
           onChange={() => toggleTaskStatus(task)}
         />
-        <ListItemText primary={task.title} sx={{ textDecoration: task.status === 'completed' ? 'line-through' : 'none' }} />
+        <ListItemText
+          primary={task.title}
+          secondary={task.continuedFromTask ? `Continues: ${task.continuedFromTask.title}` : ''}
+          sx={{ textDecoration: task.status === 'completed' ? 'line-through' : 'none' }}
+        />
       </ListItem>
       <Collapse in={openObservations === task.id} timeout="auto" unmountOnExit>
         <Box sx={{ p: 2, borderTop: '1px solid #eee' }}>
@@ -140,6 +163,24 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
             onChange={(e) => setEditingTask({ ...task, observations: e.target.value })}
             sx={{ mb: 1 }}
         />
+        <FormControl fullWidth sx={{ mb: 1 }}>
+          <InputLabel id="continued-from-task-label">Continue from task</InputLabel>
+          <Select
+            labelId="continued-from-task-label"
+            value={task.continuedFromTaskId || ''}
+            label="Continue from task"
+            onChange={(e) => setEditingTask({ ...task, continuedFromTaskId: e.target.value as number | undefined })}
+          >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+            {allTasks.map((t) => (
+              <MenuItem key={t.id} value={t.id} disabled={t.id === task.id}>
+                {t.title}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
             <Button onClick={() => setEditingTask(null)}>Cancel</Button>
             <Button variant="contained" onClick={() => handleUpdateTask(task)}>Save</Button>
@@ -150,7 +191,7 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="h6">Tasks</Typography>
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
         <TextField
           label="New Task Title"
           variant="outlined"
@@ -160,6 +201,24 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
           onChange={(e) => setNewTaskTitle(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleCreateTask()}
         />
+        <FormControl fullWidth size="small">
+          <InputLabel id="new-continued-from-task-label">Continue from task</InputLabel>
+          <Select
+            labelId="new-continued-from-task-label"
+            value={newContinuedFromTaskId}
+            label="Continue from task"
+            onChange={(e) => setNewContinuedFromTaskId(e.target.value as number)}
+          >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+            {allTasks.map((t) => (
+              <MenuItem key={t.id} value={t.id}>
+                {t.title}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <Button variant="contained" onClick={handleCreateTask}>Add</Button>
       </Box>
       <List>

@@ -8,12 +8,18 @@ export interface Task {
   status: 'pending' | 'completed';
   tags?: string;
   observations?: string;
+  continuedFromTaskId?: number;
+  continuedFromTask?: Task;
   createdAt: string;
   updatedAt:string;
 }
 
 export const getTasksForSession = (workSessionId: number): Promise<{ data: Task[] }> => {
   return api.get(`/tasks/session/${workSessionId}`);
+};
+
+export const getAllTasks = (): Promise<{ data: Task[] }> => {
+  return api.get('/tasks');
 };
 
 export const createTask = (taskData: Partial<Task>): Promise<{ data: Task }> => {
