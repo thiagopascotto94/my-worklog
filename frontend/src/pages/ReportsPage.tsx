@@ -22,10 +22,10 @@ const ReportsPage: React.FC = () => {
       setLoading(true);
       const [reportsRes, clientsRes] = await Promise.all([
         reportService.getReports(),
-        clientService.getClients(),
+        clientService.getClients({}),
       ]);
       setReports(reportsRes.data);
-      setClients(clientsRes.data);
+      setClients(clientsRes.data.clients);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch data.');
     } finally {

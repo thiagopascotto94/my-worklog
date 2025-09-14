@@ -4,6 +4,7 @@ import * as timerService from '../services/timerService';
 import * as clientService from '../services/clientService';
 import { WorkSession } from '../services/timerService';
 import { Client } from '../services/clientService';
+import TaskList from './TaskList';
 
 const Timer: React.FC = () => {
   const [session, setSession] = useState<WorkSession | null>(null);
@@ -20,10 +21,10 @@ const Timer: React.FC = () => {
         setLoading(true);
         const [sessionRes, clientsRes] = await Promise.all([
           timerService.getActiveSession(),
-          clientService.getClients()
+          clientService.getClients({})
         ]);
         setSession(sessionRes.data);
-        setClients(clientsRes.data);
+        setClients(clientsRes.data.clients);
         if (sessionRes.data) {
           setSelectedClient(sessionRes.data.clientId);
         }
@@ -156,7 +157,7 @@ const Timer: React.FC = () => {
           ))}
         </Select>
       </FormControl>
-      {/* TaskList will go here */}
+      {session && <TaskList workSessionId={session.id} />}
     </Box>
   );
 };

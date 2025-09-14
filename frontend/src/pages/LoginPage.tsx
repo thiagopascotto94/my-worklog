@@ -18,7 +18,11 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('refreshToken', response.data.refreshToken);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      if (err.response?.data?.verificationRequired) {
+        navigate('/verify-email', { state: { email } });
+      } else {
+        setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      }
     }
   };
 

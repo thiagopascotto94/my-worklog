@@ -8,6 +8,8 @@ router.use(authMiddleware);
 
 router.post('/', clientController.createClient);
 router.get('/', clientController.getAllClients);
+router.get('/cnpj/:cnpj', clientController.getClientByCnpj);
+router.get('/cep/:cep', clientController.getClientByCep);
 router.get('/:id', clientController.getClientById);
 router.put('/:id', clientController.updateClient);
 router.delete('/:id', clientController.deleteClient);
