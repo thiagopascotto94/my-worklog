@@ -1,8 +1,10 @@
 import React, { useState, useEffect, forwardRef } from 'react';
-import { Button, TextField, Box, Typography, Paper, CircularProgress, Snackbar, Alert, Divider } from '@mui/material';
+import { Button, TextField, Box, Typography, Paper, CircularProgress, Snackbar, Alert, Divider, Checkbox, FormControlLabel, IconButton } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { Client, getCnpjData, getCepData } from '../services/clientService';
+import { Client, getCnpjData, getCepData, ClientContact } from '../services/clientService';
 import { IMaskInput } from 'react-imask';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface ClientFormProps {
   onSave: (clientData: Partial<Client>) => void;
@@ -51,20 +53,47 @@ const CepMask = forwardRef<HTMLElement, CustomProps>(function CepMask(props, ref
 
 
 const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving }) => {
-  const [clientData, setClientData] = useState<Partial<Client>>({});
+  const [clientData, setClientData] = useState<Partial<Client>>({ contacts: [] });
   const [lookupLoading, setLookupLoading] = useState({ cnpj: false, cep: false });
   const [lookupError, setLookupError] = useState('');
 
   useEffect(() => {
     if (clientToEdit) {
-      setClientData(clientToEdit);
+      setClientData({
+        ...clientToEdit,
+        contacts: clientToEdit.contacts || [],
+      });
     } else {
-      setClientData({});
+      setClientData({ contacts: [] });
     }
   }, [clientToEdit]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setClientData({ ...clientData, [event.target.name]: event.target.value });
+  };
+
+  const handleContactChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const newContacts = [...(clientData.contacts || [])];
+    const { name, value, type, checked } = event.target;
+    newContacts[index] = {
+      ...newContacts[index],
+      [name]: type === 'checkbox' ? checked : value,
+    };
+    setClientData({ ...clientData, contacts: newContacts });
+  };
+
+  const addContact = () => {
+    const newContact: ClientContact = { name: '', email: '', celular: '', isWhatsapp: false, allowAproveReport: false };
+    setClientData({
+      ...clientData,
+      contacts: [...(clientData.contacts || []), newContact],
+    });
+  };
+
+  const removeContact = (index: number) => {
+    const newContacts = [...(clientData.contacts || [])];
+    newContacts.splice(index, 1);
+    setClientData({ ...clientData, contacts: newContacts });
   };
 
   const handleCnpjBlur = async () => {
@@ -271,21 +300,86 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
 
       <Box>
         <Typography variant="h6" gutterBottom>
-          Contato
+          Contatos
         </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              id="telefone"
-              label="Telefone"
-              name="telefone"
-              value={clientData.telefone || ''}
-              onChange={handleChange}
+        {clientData.contacts?.map((contact, index) => (
+          <Paper key={index} sx={{ p: 2, mb: 2, position: 'relative' }}>
+            <IconButton
+              aria-label="delete"
+              onClick={() => removeContact(index)}
+              sx={{ position: 'absolute', top: 8, right: 8 }}
               disabled={isSaving}
-            />
-          </Grid>
-        </Grid>
+            >
+              <DeleteIcon />
+            </IconButton>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Nome do Contato"
+                  name="name"
+                  value={contact.name}
+                  onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
+                  disabled={isSaving}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={contact.email}
+                  onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
+                  disabled={isSaving}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Celular"
+                  name="celular"
+                  value={contact.celular || ''}
+                  onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
+                  disabled={isSaving}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} container alignItems="center">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="isWhatsapp"
+                      checked={contact.isWhatsapp}
+                      onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
+                      disabled={isSaving}
+                    />
+                  }
+                  label="É WhatsApp?"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="allowAproveReport"
+                      checked={contact.allowAproveReport}
+                      onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
+                      disabled={isSaving}
+                    />
+                  }
+                  label="Aprova Relatórios?"
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+        ))}
+        <Button
+          startIcon={<AddIcon />}
+          onClick={addContact}
+          disabled={isSaving}
+        >
+          Adicionar Contato
+        </Button>
       </Box>
 
       <Box sx={{ mt: 4, position: 'relative' }}>

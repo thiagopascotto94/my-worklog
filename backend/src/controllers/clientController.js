@@ -1,4 +1,4 @@
-const { Client, Sequelize } = require('../models');
+const { Client, ClientContact, sequelize, Sequelize } = require('../models');
 const { getCnpjData, getCepData } = require('../services/externalApiService');
 const { Op } = Sequelize;
 
@@ -6,8 +6,9 @@ const { Op } = Sequelize;
 // @desc    Create a client
 // @access  Private
 exports.createClient = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
-    const { name, cnpj, inscricaoEstadual, cep, logradouro, numero, complemento, bairro, municipio, uf, telefone } = req.body;
+    const { name, cnpj, inscricaoEstadual, cep, logradouro, numero, complemento, bairro, municipio, uf, telefone, contacts } = req.body;
     const userId = req.user.userId;
 
     if (!name) {
@@ -27,10 +28,29 @@ exports.createClient = async (req, res) => {
       municipio,
       uf,
       telefone,
+    }, { transaction: t });
+
+    if (contacts && contacts.length > 0) {
+      const clientContacts = contacts.map(contact => ({
+        ...contact,
+        clientId: newClient.id,
+      }));
+      await ClientContact.bulkCreate(clientContacts, { transaction: t });
+    }
+
+    await t.commit();
+
+    const clientWithContacts = await Client.findByPk(newClient.id, {
+      include: [{
+        model: ClientContact,
+        as: 'contacts'
+      }]
     });
 
-    res.status(201).json(newClient);
+
+    res.status(201).json(clientWithContacts);
   } catch (error) {
+    await t.rollback();
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -59,6 +79,10 @@ exports.getAllClients = async (req, res) => {
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [['name', 'ASC']],
+      include: [{
+        model: ClientContact,
+        as: 'contacts'
+      }]
     });
 
     res.status(200).json({
@@ -80,7 +104,13 @@ exports.getClientById = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.userId;
 
-    const client = await Client.findOne({ where: { id, userId } });
+    const client = await Client.findOne({
+      where: { id, userId },
+      include: [{
+        model: ClientContact,
+        as: 'contacts'
+      }]
+    });
 
     if (!client) {
       return res.status(404).json({ message: 'Client not found.' });
@@ -96,33 +126,75 @@ exports.getClientById = async (req, res) => {
 // @desc    Update a client
 // @access  Private
 exports.updateClient = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
-    const { name, cnpj, inscricaoEstadual, cep, logradouro, numero, complemento, bairro, municipio, uf, telefone } = req.body;
+    const { name, cnpj, inscricaoEstadual, cep, logradouro, numero, complemento, bairro, municipio, uf, telefone, contacts } = req.body;
     const userId = req.user.userId;
 
-    const client = await Client.findOne({ where: { id, userId } });
+    const client = await Client.findOne({ where: { id, userId }, transaction: t });
 
     if (!client) {
+      await t.rollback();
       return res.status(404).json({ message: 'Client not found.' });
     }
 
-    client.name = name || client.name;
-    client.cnpj = cnpj || client.cnpj;
-    client.inscricaoEstadual = inscricaoEstadual || client.inscricaoEstadual;
-    client.cep = cep || client.cep;
-    client.logradouro = logradouro || client.logradouro;
-    client.numero = numero || client.numero;
-    client.complemento = complemento || client.complemento;
-    client.bairro = bairro || client.bairro;
-    client.municipio = municipio || client.municipio;
-    client.uf = uf || client.uf;
-    client.telefone = telefone || client.telefone;
+    await client.update({
+      name,
+      cnpj,
+      inscricaoEstadual,
+      cep,
+      logradouro,
+      numero,
+      complemento,
+      bairro,
+      municipio,
+      uf,
+      telefone,
+    }, { transaction: t });
 
-    await client.save();
+    if (contacts) {
+      const contactIds = contacts.map(c => c.id).filter(id => id);
 
-    res.status(200).json(client);
+      // Delete contacts that are no longer associated with the client
+      await ClientContact.destroy({
+        where: {
+          clientId: client.id,
+          id: { [Op.notIn]: contactIds }
+        },
+        transaction: t
+      });
+
+      // Upsert contacts
+      for (const contactData of contacts) {
+        if (contactData.id) {
+          // Update existing contact
+          await ClientContact.update(contactData, {
+            where: { id: contactData.id, clientId: client.id },
+            transaction: t,
+          });
+        } else {
+          // Create new contact
+          await ClientContact.create({
+            ...contactData,
+            clientId: client.id
+          }, { transaction: t });
+        }
+      }
+    }
+
+    await t.commit();
+
+    const updatedClient = await Client.findByPk(id, {
+      include: [{
+        model: ClientContact,
+        as: 'contacts'
+      }]
+    });
+
+    res.status(200).json(updatedClient);
   } catch (error) {
+    await t.rollback();
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -141,7 +213,7 @@ exports.deleteClient = async (req, res) => {
       return res.status(404).json({ message: 'Client not found.' });
     }
 
-    await client.destroy();
+    await client.destroy(); // This will also delete associated contacts due to CASCADE DELETE
 
     res.status(200).json({ message: 'Client deleted successfully.' });
   } catch (error) {
