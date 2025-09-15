@@ -8,10 +8,23 @@ const authMiddleware = require('../middleware/authMiddleware');
 // @access  Private
 router.post('/', authMiddleware, taskController.createTask);
 
+
+// @route   GET api/tasks
+// @desc    Get all tasks for a user
+// @access  Private
+router.get('/', authMiddleware, taskController.getAllTasks);
+
 // @route   GET api/tasks/session/:workSessionId
 // @desc    Get all tasks for a work session
 // @access  Private
 router.get('/session/:workSessionId', authMiddleware, taskController.getTasksForSession);
+
+
+// @route   GET api/tasks/:id
+// @desc    Get a task by id
+// @access  Private
+router.get('/:id', authMiddleware, taskController.getTaskById);
+
 
 // @route   PUT api/tasks/:id
 // @desc    Update a task

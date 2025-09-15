@@ -15,6 +15,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'workSessionId',
         as: 'workSession',
       });
+      SessionTask.belongsTo(models.SessionTask, {
+        foreignKey: 'continuedFromTaskId',
+        as: 'continuedFromTask',
+      });
+      SessionTask.hasMany(models.SessionTask, {
+        foreignKey: 'continuedFromTaskId',
+        as: 'continuedTasks',
+      });
     }
   }
   SessionTask.init({
@@ -23,7 +31,10 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     tags: DataTypes.TEXT,
     observations: DataTypes.TEXT,
-    workSessionId: DataTypes.INTEGER
+
+    workSessionId: DataTypes.INTEGER,
+    continuedFromTaskId: DataTypes.INTEGER
+
   }, {
     sequelize,
     modelName: 'SessionTask',

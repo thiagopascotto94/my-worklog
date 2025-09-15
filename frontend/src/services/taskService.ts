@@ -8,6 +8,10 @@ export interface Task {
   status: 'pending' | 'completed';
   tags?: string;
   observations?: string;
+
+  continuedFromTaskId?: number;
+  continuedFromTask?: Task;
+
   createdAt: string;
   updatedAt:string;
 }
@@ -15,6 +19,16 @@ export interface Task {
 export const getTasksForSession = (workSessionId: number): Promise<{ data: Task[] }> => {
   return api.get(`/tasks/session/${workSessionId}`);
 };
+
+
+export const getAllTasks = (search?: string): Promise<{ data: Task[] }> => {
+  return api.get('/tasks', { params: { search } });
+};
+
+export const getTaskById = (id: number): Promise<{ data: Task }> => {
+  return api.get(`/tasks/${id}`);
+};
+
 
 export const createTask = (taskData: Partial<Task>): Promise<{ data: Task }> => {
   return api.post('/tasks', taskData);

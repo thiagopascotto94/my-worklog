@@ -4,6 +4,9 @@ import { Edit, Delete, Comment } from '@mui/icons-material';
 import * as taskService from '../services/taskService';
 import { Task } from '../services/taskService';
 
+import TaskAutocomplete from './TaskAutocomplete';
+
+
 interface TaskListProps {
   workSessionId: number;
 }
@@ -11,8 +14,12 @@ interface TaskListProps {
 const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+
+  const [newContinuedFromTask, setNewContinuedFromTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [openObservations, setOpenObservations] = useState<number | null>(null);
+  const [editingInitialTask, setEditingInitialTask] = useState<Task | null>(null);
+
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -27,11 +34,27 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
     fetchTasks();
   }, [fetchTasks]);
 
+
+  useEffect(() => {
+    if (editingTask && editingTask.continuedFromTaskId) {
+      taskService.getTaskById(editingTask.continuedFromTaskId)
+        .then(res => setEditingInitialTask(res.data))
+        .catch((err: any) => console.error('Failed to fetch initial continued task', err));
+    } else {
+      setEditingInitialTask(null);
+    }
+  }, [editingTask]);
+
   const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
     try {
-      await taskService.createTask({ workSessionId, title: newTaskTitle });
+      await taskService.createTask({
+        workSessionId,
+        title: newTaskTitle,
+        continuedFromTaskId: newContinuedFromTask ? newContinuedFromTask.id : undefined,
+      });
       setNewTaskTitle('');
+      setNewContinuedFromTask(null);
       fetchTasks();
     } catch (error) {
       console.error('Failed to create task', error);
@@ -96,7 +119,13 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
           disableRipple
           onChange={() => toggleTaskStatus(task)}
         />
-        <ListItemText primary={task.title} sx={{ textDecoration: task.status === 'completed' ? 'line-through' : 'none' }} />
+
+        <ListItemText
+          primary={task.title}
+          secondary={task.continuedFromTask ? `Continues: ${task.continuedFromTask.title} (from ${new Date(task.continuedFromTask.createdAt).toLocaleDateString()})` : ''}
+          sx={{ textDecoration: task.status === 'completed' ? 'line-through' : 'none' }}
+        />
+
       </ListItem>
       <Collapse in={openObservations === task.id} timeout="auto" unmountOnExit>
         <Box sx={{ p: 2, borderTop: '1px solid #eee' }}>
@@ -140,7 +169,18 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
             onChange={(e) => setEditingTask({ ...task, observations: e.target.value })}
             sx={{ mb: 1 }}
         />
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+
+        <TaskAutocomplete
+          label="Continue from task"
+          value={editingInitialTask}
+          onChange={(newValue) => {
+            setEditingTask({ ...task, continuedFromTaskId: newValue ? newValue.id : undefined });
+            setEditingInitialTask(newValue);
+          }}
+          disabledIds={[task.id]}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
+
             <Button onClick={() => setEditingTask(null)}>Cancel</Button>
             <Button variant="contained" onClick={() => handleUpdateTask(task)}>Save</Button>
         </Box>
@@ -150,7 +190,9 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="h6">Tasks</Typography>
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+
         <TextField
           label="New Task Title"
           variant="outlined"
@@ -160,6 +202,13 @@ const TaskList: React.FC<TaskListProps> = ({ workSessionId }) => {
           onChange={(e) => setNewTaskTitle(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleCreateTask()}
         />
+
+        <TaskAutocomplete
+          label="Continue from task"
+          value={newContinuedFromTask}
+          onChange={setNewContinuedFromTask}
+        />
+
         <Button variant="contained" onClick={handleCreateTask}>Add</Button>
       </Box>
       <List>
