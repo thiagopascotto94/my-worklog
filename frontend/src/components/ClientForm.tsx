@@ -1,10 +1,10 @@
-import React, { useState, useEffect, forwardRef } from 'react';
+import React, { useState, useEffect, forwardRef, useCallback } from 'react';
 import { Button, TextField, Box, Typography, Paper, CircularProgress, Snackbar, Alert, Divider, Checkbox, FormControlLabel, IconButton } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { Client, getCnpjData, getCepData, ClientContact } from '../services/clientService';
 import { IMaskInput } from 'react-imask';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+import ContactFormItem from './ContactFormItem';
 
 interface ClientFormProps {
   onSave: (clientData: Partial<Client>) => void;
@@ -72,29 +72,33 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
     setClientData({ ...clientData, [event.target.name]: event.target.value });
   };
 
-  const handleContactChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
-    const newContacts = [...(clientData.contacts || [])];
+  const handleContactChange = useCallback((index: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = event.target;
-    newContacts[index] = {
-      ...newContacts[index],
-      [name]: type === 'checkbox' ? checked : value,
-    };
-    setClientData({ ...clientData, contacts: newContacts });
-  };
-
-  const addContact = () => {
-    const newContact: ClientContact = { name: '', email: '', celular: '', isWhatsapp: false, allowAproveReport: false };
-    setClientData({
-      ...clientData,
-      contacts: [...(clientData.contacts || []), newContact],
+    setClientData(prevData => {
+      const newContacts = [...(prevData.contacts || [])];
+      newContacts[index] = {
+        ...newContacts[index],
+        [name]: type === 'checkbox' ? checked : value,
+      };
+      return { ...prevData, contacts: newContacts };
     });
-  };
+  }, []);
 
-  const removeContact = (index: number) => {
-    const newContacts = [...(clientData.contacts || [])];
-    newContacts.splice(index, 1);
-    setClientData({ ...clientData, contacts: newContacts });
-  };
+  const addContact = useCallback(() => {
+    const newContact: ClientContact = { name: '', email: '', celular: '', isWhatsapp: false, allowAproveReport: false };
+    setClientData(prevData => ({
+      ...prevData,
+      contacts: [...(prevData.contacts || []), newContact],
+    }));
+  }, []);
+
+  const removeContact = useCallback((index: number) => {
+    setClientData(prevData => {
+      const newContacts = [...(prevData.contacts || [])];
+      newContacts.splice(index, 1);
+      return { ...prevData, contacts: newContacts };
+    });
+  }, []);
 
   const handleCnpjBlur = async () => {
     if (clientData.cnpj) {
@@ -303,75 +307,14 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
           Contatos
         </Typography>
         {clientData.contacts?.map((contact, index) => (
-          <Paper key={index} sx={{ p: 2, mb: 2, position: 'relative' }}>
-            <IconButton
-              aria-label="delete"
-              onClick={() => removeContact(index)}
-              sx={{ position: 'absolute', top: 8, right: 8 }}
-              disabled={isSaving}
-            >
-              <DeleteIcon />
-            </IconButton>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Nome do Contato"
-                  name="name"
-                  value={contact.name}
-                  onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
-                  disabled={isSaving}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={contact.email}
-                  onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
-                  disabled={isSaving}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Celular"
-                  name="celular"
-                  value={contact.celular || ''}
-                  onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
-                  disabled={isSaving}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} container alignItems="center">
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      name="isWhatsapp"
-                      checked={contact.isWhatsapp}
-                      onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
-                      disabled={isSaving}
-                    />
-                  }
-                  label="É WhatsApp?"
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      name="allowAproveReport"
-                      checked={contact.allowAproveReport}
-                      onChange={(e) => handleContactChange(index, e as React.ChangeEvent<HTMLInputElement>)}
-                      disabled={isSaving}
-                    />
-                  }
-                  label="Aprova Relatórios?"
-                />
-              </Grid>
-            </Grid>
-          </Paper>
+          <ContactFormItem
+            key={index}
+            contact={contact}
+            index={index}
+            isSaving={isSaving}
+            handleContactChange={handleContactChange}
+            removeContact={removeContact}
+          />
         ))}
         <Button
           startIcon={<AddIcon />}
