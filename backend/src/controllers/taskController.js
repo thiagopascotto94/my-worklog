@@ -104,6 +104,7 @@ exports.getTasksForSession = async (req, res) => {
       return res.status(404).json({ message: 'Work session not found.' });
     }
 
+
     const tasks = await SessionTask.findAll({
       where: { workSessionId },
       include: ['continuedFromTask']
@@ -121,7 +122,9 @@ exports.getTasksForSession = async (req, res) => {
 exports.updateTask = async (req, res) => {
   try {
     const { id } = req.params;
+
     const { title, description, status, tags, observations, continuedFromTaskId } = req.body;
+
     const userId = req.user.userId;
 
     const task = await SessionTask.findOne({
@@ -143,6 +146,7 @@ exports.updateTask = async (req, res) => {
     task.tags = tags || task.tags;
     task.observations = observations || task.observations;
     task.continuedFromTaskId = continuedFromTaskId !== undefined ? continuedFromTaskId : task.continuedFromTaskId;
+
 
     await task.save();
 

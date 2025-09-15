@@ -31,8 +31,10 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     tags: DataTypes.TEXT,
     observations: DataTypes.TEXT,
+
     workSessionId: DataTypes.INTEGER,
     continuedFromTaskId: DataTypes.INTEGER
+
   }, {
     sequelize,
     modelName: 'SessionTask',
