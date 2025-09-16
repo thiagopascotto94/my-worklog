@@ -95,12 +95,12 @@ const ReportViewPage: React.FC = () => {
               value={editableRate}
               onChange={(e) => setEditableRate(e.target.value)}
               InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
-              disabled={updateLoading || report.status === 'approved' || report.status === 'declined'}
+              disabled={updateLoading}
             />
             <Button
               variant="contained"
               onClick={handleUpdateRate}
-              disabled={updateLoading || report.status === 'approved' || report.status === 'declined'}
+              disabled={updateLoading}
             >
               {updateLoading ? <CircularProgress size={24} /> : 'Save Rate'}
             </Button>
