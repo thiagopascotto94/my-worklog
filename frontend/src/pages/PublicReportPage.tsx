@@ -50,7 +50,11 @@ const PublicReportPage: React.FC = () => {
   };
 
   const handleSubmitStatus = async () => {
-    if (!token || !statusToUpdate || !celular) {
+    if (typeof token !== 'string' || !token) {
+        setError('Invalid report link. The token is missing or invalid.');
+        return;
+    }
+    if (!statusToUpdate || !celular) {
       setError('Phone number is required.');
       return;
     }
@@ -71,7 +75,17 @@ const PublicReportPage: React.FC = () => {
       const updatedReport = await reportService.getPublicReportByToken(token);
       setReport(updatedReport.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred.');
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        setError(err.response.data.message || 'An error occurred with the server response.');
+      } else if (err.request) {
+        // The request was made but no response was received
+        setError('No response from server. Please check your network connection.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError('An error occurred while sending the request.');
+      }
     } finally {
       setIsSubmitting(false);
       handleCloseDialog();
