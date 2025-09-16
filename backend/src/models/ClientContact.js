@@ -20,6 +20,9 @@ module.exports = (sequelize, DataTypes) => {
   ClientContact.init({
     name: DataTypes.STRING,
     email: DataTypes.STRING,
+    celular: DataTypes.STRING,
+    isWhatsapp: DataTypes.BOOLEAN,
+    allowAproveReport: DataTypes.BOOLEAN,
     approval_key: DataTypes.STRING,
     clientId: DataTypes.INTEGER
   }, {

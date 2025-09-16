@@ -1,8 +1,10 @@
-import React, { useState, useEffect, forwardRef } from 'react';
-import { Button, TextField, Box, Typography, Paper, CircularProgress, Snackbar, Alert, Divider } from '@mui/material';
+import React, { useState, useEffect, forwardRef, useCallback } from 'react';
+import { Button, TextField, Box, Typography, Paper, CircularProgress, Snackbar, Alert, Divider, Checkbox, FormControlLabel, IconButton } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { Client, getCnpjData, getCepData } from '../services/clientService';
+import { Client, getCnpjData, getCepData, ClientContact } from '../services/clientService';
 import { IMaskInput } from 'react-imask';
+import AddIcon from '@mui/icons-material/Add';
+import ContactFormItem from './ContactFormItem';
 
 interface ClientFormProps {
   onSave: (clientData: Partial<Client>) => void;
@@ -51,21 +53,52 @@ const CepMask = forwardRef<HTMLElement, CustomProps>(function CepMask(props, ref
 
 
 const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving }) => {
-  const [clientData, setClientData] = useState<Partial<Client>>({});
+  const [clientData, setClientData] = useState<Partial<Client>>({ contacts: [] });
   const [lookupLoading, setLookupLoading] = useState({ cnpj: false, cep: false });
   const [lookupError, setLookupError] = useState('');
 
   useEffect(() => {
     if (clientToEdit) {
-      setClientData(clientToEdit);
+      setClientData({
+        ...clientToEdit,
+        contacts: clientToEdit.contacts || [],
+      });
     } else {
-      setClientData({});
+      setClientData({ contacts: [] });
     }
   }, [clientToEdit]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setClientData({ ...clientData, [event.target.name]: event.target.value });
   };
+
+  const handleContactChange = useCallback((index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = event.target;
+    setClientData(prevData => {
+      const newContacts = [...(prevData.contacts || [])];
+      newContacts[index] = {
+        ...newContacts[index],
+        [name]: type === 'checkbox' ? checked : value,
+      };
+      return { ...prevData, contacts: newContacts };
+    });
+  }, []);
+
+  const addContact = useCallback(() => {
+    const newContact: ClientContact = { name: '', email: '', celular: '', isWhatsapp: false, allowAproveReport: false };
+    setClientData(prevData => ({
+      ...prevData,
+      contacts: [...(prevData.contacts || []), newContact],
+    }));
+  }, []);
+
+  const removeContact = useCallback((index: number) => {
+    setClientData(prevData => {
+      const newContacts = [...(prevData.contacts || [])];
+      newContacts.splice(index, 1);
+      return { ...prevData, contacts: newContacts };
+    });
+  }, []);
 
   const handleCnpjBlur = async () => {
     if (clientData.cnpj) {
@@ -271,21 +304,25 @@ const ClientForm: React.FC<ClientFormProps> = ({ onSave, clientToEdit, isSaving 
 
       <Box>
         <Typography variant="h6" gutterBottom>
-          Contato
+          Contatos
         </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              id="telefone"
-              label="Telefone"
-              name="telefone"
-              value={clientData.telefone || ''}
-              onChange={handleChange}
-              disabled={isSaving}
-            />
-          </Grid>
-        </Grid>
+        {clientData.contacts?.map((contact, index) => (
+          <ContactFormItem
+            key={index}
+            contact={contact}
+            index={index}
+            isSaving={isSaving}
+            handleContactChange={handleContactChange}
+            removeContact={removeContact}
+          />
+        ))}
+        <Button
+          startIcon={<AddIcon />}
+          onClick={addContact}
+          disabled={isSaving}
+        >
+          Adicionar Contato
+        </Button>
       </Box>
 
       <Box sx={{ mt: 4, position: 'relative' }}>

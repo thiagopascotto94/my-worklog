@@ -1,9 +1,19 @@
 import api from './api';
 
+// Define the type for a ClientContact for TypeScript
+export interface ClientContact {
+  id?: number;
+  name: string;
+  email: string;
+  celular?: string;
+  isWhatsapp: boolean;
+  allowAproveReport: boolean;
+}
+
 // Define the type for a Client for TypeScript
 export interface Client {
   id: number;
-  name: string;
+  name:string;
   userId: number;
   createdAt: string;
   updatedAt: string;
@@ -17,6 +27,7 @@ export interface Client {
   municipio?: string;
   uf?: string;
   telefone?: string;
+  contacts?: ClientContact[];
 }
 
 export interface GetClientsParams {
