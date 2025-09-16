@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Typography, Box, Paper, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Divider } from '@mui/material';
+import { Container, Typography, Box, Paper, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Divider, TextField, Button, Stack } from '@mui/material';
 import * as reportService from '../services/reportService';
 import { Report } from '../services/reportService';
 
@@ -10,22 +10,48 @@ const ReportViewPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  // State for editing hourly rate
+  const [editableRate, setEditableRate] = useState('');
+  const [updateLoading, setUpdateLoading] = useState(false);
+
+  const fetchReport = async () => {
     if (id) {
-      const fetchReport = async () => {
-        try {
-          setLoading(true);
-          const response = await reportService.getReportById(parseInt(id, 10));
-          setReport(response.data);
-        } catch (err: any) {
-          setError(err.response?.data?.message || 'Failed to fetch report details.');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchReport();
+      try {
+        setLoading(true);
+        setError('');
+        const response = await reportService.getReportById(parseInt(id, 10));
+        setReport(response.data);
+        setEditableRate(response.data.hourlyRate?.toString() || '');
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to fetch report details.');
+      } finally {
+        setLoading(false);
+      }
     }
+  };
+
+  useEffect(() => {
+    fetchReport();
   }, [id]);
+
+  const handleUpdateRate = async () => {
+    if (!id || !editableRate || isNaN(parseFloat(editableRate))) {
+      setError('Please enter a valid hourly rate.');
+      return;
+    }
+    setUpdateLoading(true);
+    setError('');
+    try {
+      const response = await reportService.updateReport(parseInt(id, 10), {
+        hourlyRate: parseFloat(editableRate),
+      });
+      setReport(response.data); // Update the whole report object
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to update hourly rate.');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
 
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
@@ -34,6 +60,7 @@ const ReportViewPage: React.FC = () => {
   return (
     <Container sx={{ my: 4 }}>
       <Paper sx={{ p: 3 }}>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Typography variant="h4" gutterBottom>
           Report #{report.id}
         </Typography>
@@ -52,6 +79,25 @@ const ReportViewPage: React.FC = () => {
           </Box>
         </Box>
         <Divider sx={{ my: 2 }} />
+
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+           <TextField
+            label="Report Hourly Rate"
+            type="number"
+            size="small"
+            value={editableRate}
+            onChange={(e) => setEditableRate(e.target.value)}
+            InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
+          />
+          <Button
+            variant="contained"
+            onClick={handleUpdateRate}
+            disabled={updateLoading}
+          >
+            {updateLoading ? <CircularProgress size={24} /> : 'Save Rate'}
+          </Button>
+        </Stack>
+
         <Typography variant="h5" gutterBottom>
           Work Sessions
         </Typography>

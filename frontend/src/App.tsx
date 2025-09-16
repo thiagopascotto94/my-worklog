@@ -8,6 +8,7 @@ import ClientCreatePage from './pages/ClientCreatePage';
 import ClientEditPage from './pages/ClientEditPage';
 import ReportsPage from './pages/ReportsPage';
 import ReportViewPage from './pages/ReportViewPage';
+import PublicReportPage from './pages/PublicReportPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Timer from './components/Timer';
 import RegistrationSuccessPage from './pages/RegistrationSuccessPage';
@@ -52,6 +53,7 @@ function App() {
         <Route path="/clients/edit/:id" element={<ProtectedRoute><ClientEditPage /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
         <Route path="/reports/:id" element={<ProtectedRoute><ReportViewPage /></ProtectedRoute>} />
+        <Route path="/reports/public/:token" element={<PublicReportPage />} />
         <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       </Routes>
     </>
