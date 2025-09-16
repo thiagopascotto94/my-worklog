@@ -23,6 +23,7 @@ export interface Report {
   shareToken?: string;
   approvedAt?: string;
   approvedBy?: number;
+  rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
   client?: Client; // Eager loaded
@@ -45,6 +46,7 @@ export interface UpdateReportPayload {
 export interface UpdateStatusPayload {
   status: 'approved' | 'declined';
   celular: string;
+  rejectionReason?: string;
 }
 
 // === API Functions ===
@@ -78,5 +80,9 @@ export const getPublicReportByToken = (token: string): Promise<{ data: Report }>
 };
 
 export const updateReportStatus = (token: string, payload: UpdateStatusPayload): Promise<{ data: { message: string } }> => {
-  return api.post(`/reports/public/${token}/status`, payload);
+  return api.post(`/public/${token}/status`, payload);
+};
+
+export const duplicateReport = (id: number): Promise<{ data: Report }> => {
+  return api.post(`/reports/${id}/duplicate`);
 };

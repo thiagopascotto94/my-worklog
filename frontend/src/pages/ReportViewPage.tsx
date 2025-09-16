@@ -85,6 +85,11 @@ const ReportViewPage: React.FC = () => {
             This report was {report.status}
             {report.approvedAt && ` on ${new Date(report.approvedAt).toLocaleDateString()}`}
             {report.approver && ` by ${report.approver.name}`}.
+            {report.status === 'declined' && report.rejectionReason && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                <strong>Reason:</strong> {report.rejectionReason}
+              </Typography>
+            )}
           </Alert>
         ) : (
           <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>

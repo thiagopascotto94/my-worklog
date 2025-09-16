@@ -79,6 +79,60 @@ exports.generateReport = async (req, res) => {
   }
 };
 
+// @route   POST api/reports/:id/duplicate
+// @desc    Duplicate a report
+// @access  Private
+exports.duplicateReport = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    const originalReport = await Report.findOne({
+      where: { id, userId },
+      include: [{ model: ReportItem, as: 'items' }],
+      transaction: t,
+    });
+
+    if (!originalReport) {
+      await t.rollback();
+      return res.status(404).json({ message: 'Original report not found.' });
+    }
+
+    const newReport = await Report.create({
+      userId,
+      clientId: originalReport.clientId,
+      startDate: originalReport.startDate,
+      endDate: originalReport.endDate,
+      hourlyRate: originalReport.hourlyRate,
+      totalAmount: originalReport.totalAmount,
+      status: 'draft',
+    }, { transaction: t });
+
+    const newReportItems = originalReport.items.map(item => ({
+      reportId: newReport.id,
+      workSessionId: item.workSessionId,
+    }));
+
+    await ReportItem.bulkCreate(newReportItems, { transaction: t });
+
+    await t.commit();
+
+    const createdReport = await Report.findOne({
+        where: { id: newReport.id },
+        include: [
+            { model: Client, as: 'client' },
+            { model: ReportItem, as: 'items', include: [{ model: WorkSession }] }
+        ]
+    });
+
+    res.status(201).json(createdReport);
+  } catch (error) {
+    await t.rollback();
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // @route   GET api/reports
 // @desc    Get all reports for a user
 // @access  Private
@@ -275,7 +329,7 @@ exports.updateReportStatus = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const { token } = req.params;
-    const { status, celular } = req.body;
+    const { status, celular, rejectionReason } = req.body;
 
     if (!['approved', 'declined'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status provided.' });
@@ -307,6 +361,9 @@ exports.updateReportStatus = async (req, res) => {
     report.status = status;
     report.approvedBy = contact.id;
     report.approvedAt = new Date();
+    if (status === 'declined') {
+      report.rejectionReason = rejectionReason || null;
+    }
     await report.save({ transaction: t });
 
     await t.commit();

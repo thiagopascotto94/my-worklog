@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert, TextField, Autocomplete, Stack, IconButton } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Delete, Share, Visibility } from '@mui/icons-material';
+import { Delete, Share, Visibility, ContentCopy } from '@mui/icons-material';
 import * as reportService from '../services/reportService';
 import * as clientService from '../services/clientService';
 import { Report } from '../services/reportService';
@@ -66,7 +66,7 @@ const ReportsPage: React.FC = () => {
     }
   };
 
-  const handleAction = (reportId: number, action: 'delete' | 'share') => async () => {
+  const handleAction = (reportId: number, action: 'delete' | 'share' | 'duplicate') => async () => {
     setActionLoading(prev => ({ ...prev, [reportId]: true }));
     setError('');
     try {
@@ -81,6 +81,10 @@ const ReportsPage: React.FC = () => {
         window.prompt('Copy this link to share the report:', shareUrl);
         // Update the status in the UI
         setReports(prev => prev.map(r => r.id === reportId ? { ...r, status: 'sent', shareToken: updatedReport.shareToken } : r));
+      } else if (action === 'duplicate') {
+        await reportService.duplicateReport(reportId);
+        // Refetch all reports to see the new draft
+        fetchReportsAndClients();
       }
     } catch (err: any) {
       setError(err.response?.data?.message || `Failed to ${action} report.`);
@@ -153,6 +157,9 @@ const ReportsPage: React.FC = () => {
                       </IconButton>
                       <IconButton onClick={handleAction(report.id, 'share')} size="small" color="secondary" disabled={actionLoading[report.id]}>
                         <Share />
+                      </IconButton>
+                      <IconButton onClick={handleAction(report.id, 'duplicate')} size="small" color="default" disabled={actionLoading[report.id]}>
+                        <ContentCopy />
                       </IconButton>
                       <IconButton onClick={handleAction(report.id, 'delete')} size="small" color="error" disabled={actionLoading[report.id]}>
                         <Delete />

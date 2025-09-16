@@ -14,6 +14,7 @@ const PublicReportPage: React.FC = () => {
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [celular, setCelular] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
   const [statusToUpdate, setStatusToUpdate] = useState<'approved' | 'declined' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,6 +45,7 @@ const PublicReportPage: React.FC = () => {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setCelular('');
+    setRejectionReason('');
     // Do not clear the error here, so it can be displayed on the main page
   };
 
@@ -52,10 +54,18 @@ const PublicReportPage: React.FC = () => {
       setError('Phone number is required.');
       return;
     }
+    if (statusToUpdate === 'declined' && !rejectionReason) {
+      setError('A reason is required when declining a report.');
+      return;
+    }
     setIsSubmitting(true);
     setError('');
     try {
-      const response = await reportService.updateReportStatus(token, { status: statusToUpdate, celular });
+      const payload: reportService.UpdateStatusPayload = { status: statusToUpdate, celular };
+      if (statusToUpdate === 'declined') {
+        payload.rejectionReason = rejectionReason;
+      }
+      const response = await reportService.updateReportStatus(token, payload);
       setSuccessMessage(response.data.message);
       // Optionally, refetch the report to show updated status
       const updatedReport = await reportService.getPublicReportByToken(token);
@@ -165,6 +175,20 @@ const PublicReportPage: React.FC = () => {
             value={celular}
             onChange={(e) => setCelular(e.target.value)}
           />
+          {statusToUpdate === 'declined' && (
+            <TextField
+              margin="dense"
+              id="rejectionReason"
+              label="Reason for Declining"
+              type="text"
+              fullWidth
+              multiline
+              rows={3}
+              variant="standard"
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+            />
+          )}
           {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>

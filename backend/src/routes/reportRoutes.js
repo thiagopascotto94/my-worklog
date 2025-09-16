@@ -17,5 +17,6 @@ router.get('/:id', reportController.getReportById);
 router.put('/:id', reportController.updateReport);
 router.delete('/:id', reportController.deleteReport);
 router.post('/:id/share', reportController.shareReport);
+router.post('/:id/duplicate', reportController.duplicateReport);
 
 module.exports = router;

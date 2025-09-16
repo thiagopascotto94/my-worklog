@@ -27,7 +27,8 @@ module.exports = (sequelize, DataTypes) => {
     hourlyRate: DataTypes.DECIMAL(10, 2),
     shareToken: DataTypes.STRING,
     approvedAt: DataTypes.DATE,
-    approvedBy: DataTypes.INTEGER
+    approvedBy: DataTypes.INTEGER,
+    rejectionReason: DataTypes.TEXT
   }, {
     sequelize,
     modelName: 'Report',
