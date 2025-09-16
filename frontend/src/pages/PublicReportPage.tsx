@@ -37,13 +37,14 @@ const PublicReportPage: React.FC = () => {
 
   const handleOpenDialog = (status: 'approved' | 'declined') => {
     setStatusToUpdate(status);
+    setError(''); // Clear previous errors when opening the dialog
     setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setCelular('');
-    setError('');
+    // Do not clear the error here, so it can be displayed on the main page
   };
 
   const handleSubmitStatus = async () => {
