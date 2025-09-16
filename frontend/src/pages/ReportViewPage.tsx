@@ -80,23 +80,32 @@ const ReportViewPage: React.FC = () => {
         </Box>
         <Divider sx={{ my: 2 }} />
 
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-           <TextField
-            label="Report Hourly Rate"
-            type="number"
-            size="small"
-            value={editableRate}
-            onChange={(e) => setEditableRate(e.target.value)}
-            InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
-          />
-          <Button
-            variant="contained"
-            onClick={handleUpdateRate}
-            disabled={updateLoading}
-          >
-            {updateLoading ? <CircularProgress size={24} /> : 'Save Rate'}
-          </Button>
-        </Stack>
+        {report.status === 'approved' || report.status === 'declined' ? (
+          <Alert severity={report.status === 'approved' ? 'success' : 'error'} sx={{ mb: 2 }}>
+            This report was {report.status}
+            {report.approvedAt && ` on ${new Date(report.approvedAt).toLocaleDateString()}`}
+            {report.approver && ` by ${report.approver.name}`}.
+          </Alert>
+        ) : (
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+            <TextField
+              label="Report Hourly Rate"
+              type="number"
+              size="small"
+              value={editableRate}
+              onChange={(e) => setEditableRate(e.target.value)}
+              InputProps={{ startAdornment: <Typography sx={{ mr: 1 }}>$</Typography> }}
+              disabled={updateLoading || report.status === 'approved' || report.status === 'declined'}
+            />
+            <Button
+              variant="contained"
+              onClick={handleUpdateRate}
+              disabled={updateLoading || report.status === 'approved' || report.status === 'declined'}
+            >
+              {updateLoading ? <CircularProgress size={24} /> : 'Save Rate'}
+            </Button>
+          </Stack>
+        )}
 
         <Typography variant="h5" gutterBottom>
           Work Sessions
