@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       Report.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
       Report.belongsTo(models.Client, { foreignKey: 'clientId', as: 'client' });
       Report.hasMany(models.ReportItem, { foreignKey: 'reportId', as: 'items' });
+      Report.belongsTo(models.ClientContact, { foreignKey: 'approvedBy', as: 'approver' });
     }
   }
   Report.init({
@@ -22,7 +23,12 @@ module.exports = (sequelize, DataTypes) => {
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
     totalAmount: DataTypes.DECIMAL,
-    status: DataTypes.STRING
+    status: DataTypes.STRING,
+    hourlyRate: DataTypes.DECIMAL(10, 2),
+    shareToken: DataTypes.STRING,
+    approvedAt: DataTypes.DATE,
+    approvedBy: DataTypes.INTEGER,
+    rejectionReason: DataTypes.TEXT
   }, {
     sequelize,
     modelName: 'Report',
