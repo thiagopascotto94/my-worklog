@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Typography, Box, Paper, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Divider, TextField, Button, Stack } from '@mui/material';
+import {
+  Container, Typography, Box, Paper, CircularProgress, Alert, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Divider, TextField, Button, Stack, Collapse, IconButton,
+  List, ListItem, ListItemIcon, ListItemText
+} from '@mui/material';
+import { CheckCircle, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import * as reportService from '../services/reportService';
 import { Report } from '../services/reportService';
 
@@ -13,6 +18,7 @@ const ReportViewPage: React.FC = () => {
   // State for editing hourly rate
   const [editableRate, setEditableRate] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [openRow, setOpenRow] = useState<number | null>(null);
 
   const fetchReport = async () => {
     if (id) {
@@ -130,13 +136,47 @@ const ReportViewPage: React.FC = () => {
                 const session = item.WorkSession;
                 const durationInSeconds = (new Date(session.endTime!).getTime() - new Date(session.startTime).getTime()) / 1000 - session.totalPausedSeconds;
                 const durationHours = (durationInSeconds / 3600).toFixed(2);
+                const isExpanded = openRow === session.id;
+
                 return (
-                  <TableRow key={session.id}>
-                    <TableCell>{new Date(session.startTime).toLocaleDateString()}</TableCell>
-                    <TableCell>{durationHours} hours</TableCell>
-                    <TableCell>${session.hourlyRate?.toFixed(2)}</TableCell>
-                    <TableCell>${session.totalEarned?.toFixed(2)}</TableCell>
-                  </TableRow>
+                  <React.Fragment key={session.id}>
+                    <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+                      <TableCell>
+                        <IconButton
+                          aria-label="expand row"
+                          size="small"
+                          onClick={() => setOpenRow(isExpanded ? null : session.id)}
+                        >
+                          <ExpandMoreIcon style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                        </IconButton>
+                        {new Date(session.startTime).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{durationHours} hours</TableCell>
+                      <TableCell>${session.hourlyRate?.toFixed(2)}</TableCell>
+                      <TableCell>${session.totalEarned?.toFixed(2)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                          <Box sx={{ margin: 1 }}>
+                            <Typography variant="h6" gutterBottom component="div">
+                              Tasks
+                            </Typography>
+                            <List dense>
+                              {session.tasks?.map((task) => (
+                                <ListItem key={task.id}>
+                                  <ListItemIcon>
+                                    <CheckCircle color={task.status === 'completed' ? "success" : "disabled"} />
+                                  </ListItemIcon>
+                                  <ListItemText primary={task.description} />
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
                 );
               })}
             </TableBody>

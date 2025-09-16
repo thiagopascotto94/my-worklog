@@ -5,6 +5,7 @@ export interface SessionTask {
   id: number;
   description: string;
   createdAt: string;
+  status: string;
 }
 
 export interface WorkSession {
