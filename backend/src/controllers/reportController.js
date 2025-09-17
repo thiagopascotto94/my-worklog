@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { Report, ReportItem, WorkSession, Client, ClientContact, sequelize } = require('../models');
+const { Report, ReportItem, WorkSession, Client, ClientContact, SessionTask, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 // @route   POST api/reports/generate
@@ -68,7 +68,14 @@ exports.generateReport = async (req, res) => {
         where: { id: newReport.id },
         include: [
             { model: Client, as: 'client' },
-            { model: ReportItem, as: 'items', include: [{ model: WorkSession }] }
+            {
+                model: ReportItem,
+                as: 'items',
+                include: [{
+                    model: WorkSession,
+                    include: [{ model: SessionTask, as: 'tasks' }]
+                }]
+            }
         ]
     });
 
@@ -122,7 +129,14 @@ exports.duplicateReport = async (req, res) => {
         where: { id: newReport.id },
         include: [
             { model: Client, as: 'client' },
-            { model: ReportItem, as: 'items', include: [{ model: WorkSession }] }
+            {
+                model: ReportItem,
+                as: 'items',
+                include: [{
+                    model: WorkSession,
+                    include: [{ model: SessionTask, as: 'tasks' }]
+                }]
+            }
         ]
     });
 
@@ -162,7 +176,10 @@ exports.getReportById = async (req, res) => {
         {
           model: ReportItem,
           as: 'items',
-          include: [{ model: WorkSession }],
+          include: [{
+            model: WorkSession,
+            include: [{ model: SessionTask, as: 'tasks' }]
+          }],
         },
       ],
     });
@@ -190,7 +207,14 @@ exports.updateReport = async (req, res) => {
   try {
     const report = await Report.findOne({
       where: { id, userId },
-      include: [{ model: ReportItem, as: 'items', include: [{ model: WorkSession }] }],
+      include: [{
+        model: ReportItem,
+        as: 'items',
+        include: [{
+          model: WorkSession,
+          include: [{ model: SessionTask, as: 'tasks' }]
+        }]
+      }],
       transaction: t,
     });
 
@@ -223,7 +247,14 @@ exports.updateReport = async (req, res) => {
       where: { id },
       include: [
         { model: Client, as: 'client' },
-        { model: ReportItem, as: 'items', include: [{ model: WorkSession }] },
+        {
+            model: ReportItem,
+            as: 'items',
+            include: [{
+                model: WorkSession,
+                include: [{ model: SessionTask, as: 'tasks' }]
+            }]
+        },
         { model: ClientContact, as: 'approver' }
       ],
     });
@@ -306,7 +337,10 @@ exports.getPublicReportByToken = async (req, res) => {
         {
           model: ReportItem,
           as: 'items',
-          include: [{ model: WorkSession }],
+          include: [{
+            model: WorkSession,
+            include: [{ model: SessionTask, as: 'tasks' }]
+          }],
         },
         { model: ClientContact, as: 'approver' }
       ],

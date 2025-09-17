@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Typography, Box, Paper, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Divider, TextField, Button, Stack } from '@mui/material';
+import {
+  Container, Typography, Box, Paper, CircularProgress, Alert, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Divider, TextField, Button, Stack, Collapse, IconButton,
+  List, ListItem, ListItemIcon, ListItemText
+} from '@mui/material';
+import { CheckCircle, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import * as reportService from '../services/reportService';
 import { Report } from '../services/reportService';
 
@@ -13,6 +18,7 @@ const ReportViewPage: React.FC = () => {
   // State for editing hourly rate
   const [editableRate, setEditableRate] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [openRows, setOpenRows] = useState<number[]>([]);
 
   const fetchReport = async () => {
     if (id) {
@@ -22,6 +28,10 @@ const ReportViewPage: React.FC = () => {
         const response = await reportService.getReportById(parseInt(id, 10));
         setReport(response.data);
         setEditableRate(response.data.hourlyRate?.toString() || '');
+        // Expand all rows by default
+        if (response.data && response.data.items) {
+          setOpenRows(response.data.items.map(item => item.WorkSession.id));
+        }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to fetch report details.');
       } finally {
@@ -50,6 +60,22 @@ const ReportViewPage: React.FC = () => {
       setError(err.response?.data?.message || 'Failed to update hourly rate.');
     } finally {
       setUpdateLoading(false);
+    }
+  };
+
+  const handleToggleRow = (sessionId: number) => {
+    setOpenRows(prevOpenRows =>
+      prevOpenRows.includes(sessionId)
+        ? prevOpenRows.filter(id => id !== sessionId)
+        : [...prevOpenRows, sessionId]
+    );
+  };
+
+  const handleToggleAll = () => {
+    if (report && report.items && openRows.length === report.items.length) {
+      setOpenRows([]);
+    } else if (report && report.items) {
+      setOpenRows(report.items.map(item => item.WorkSession.id));
     }
   };
 
@@ -112,9 +138,19 @@ const ReportViewPage: React.FC = () => {
           </Stack>
         )}
 
-        <Typography variant="h5" gutterBottom>
-          Work Sessions
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h5" component="div">
+            Work Sessions
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleToggleAll}
+            disabled={!report || !report.items || report.items.length === 0}
+          >
+            {report && report.items && openRows.length === report.items.length ? 'Collapse All' : 'Expand All'}
+          </Button>
+        </Box>
         <TableContainer>
           <Table>
             <TableHead>
@@ -130,13 +166,47 @@ const ReportViewPage: React.FC = () => {
                 const session = item.WorkSession;
                 const durationInSeconds = (new Date(session.endTime!).getTime() - new Date(session.startTime).getTime()) / 1000 - session.totalPausedSeconds;
                 const durationHours = (durationInSeconds / 3600).toFixed(2);
+                const isExpanded = openRows.includes(session.id);
+
                 return (
-                  <TableRow key={session.id}>
-                    <TableCell>{new Date(session.startTime).toLocaleDateString()}</TableCell>
-                    <TableCell>{durationHours} hours</TableCell>
-                    <TableCell>${session.hourlyRate?.toFixed(2)}</TableCell>
-                    <TableCell>${session.totalEarned?.toFixed(2)}</TableCell>
-                  </TableRow>
+                  <React.Fragment key={session.id}>
+                    <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+                      <TableCell>
+                        <IconButton
+                          aria-label="expand row"
+                          size="small"
+                          onClick={() => handleToggleRow(session.id)}
+                        >
+                          <ExpandMoreIcon style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                        </IconButton>
+                        {new Date(session.startTime).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{durationHours} hours</TableCell>
+                      <TableCell>${session.hourlyRate?.toFixed(2)}</TableCell>
+                      <TableCell>${session.totalEarned?.toFixed(2)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                          <Box sx={{ margin: 1 }}>
+                            <Typography variant="h6" gutterBottom component="div">
+                              Tasks
+                            </Typography>
+                            <List dense>
+                              {session.tasks?.map((task) => (
+                                <ListItem key={task.id}>
+                                  <ListItemIcon>
+                                    <CheckCircle color={task.status === 'completed' ? "success" : "disabled"} />
+                                  </ListItemIcon>
+                                  <ListItemText primary={task.title} />
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
                 );
               })}
             </TableBody>
