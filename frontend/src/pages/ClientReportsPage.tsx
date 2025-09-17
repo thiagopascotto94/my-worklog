@@ -3,7 +3,8 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { Link as RouterLink } from 'react-router-dom';
 import { Delete, Share, Visibility, ContentCopy } from '@mui/icons-material';
 import * as reportService from '../services/reportService';
-import { Report, ReportSummary } from '../services/reportService';
+import { Report, ReportSummary, MonthlyEarning } from '../services/reportService';
+import EarningsChart from '../components/EarningsChart';
 
 interface ClientReportsPageProps {
   clientId: number;
@@ -12,6 +13,7 @@ interface ClientReportsPageProps {
 const ClientReportsPage: React.FC<ClientReportsPageProps> = ({ clientId }) => {
   const [reports, setReports] = useState<Report[]>([]);
   const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [monthlyEarnings, setMonthlyEarnings] = useState<MonthlyEarning[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<Record<number, boolean>>({});
@@ -23,6 +25,7 @@ const ClientReportsPage: React.FC<ClientReportsPageProps> = ({ clientId }) => {
       const { data } = await reportService.getReportsByClientId(clientId);
       setReports(data.reports);
       setSummary(data.summary);
+      setMonthlyEarnings(data.monthlyEarnings);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch reports.');
     } finally {
@@ -67,31 +70,37 @@ const ClientReportsPage: React.FC<ClientReportsPageProps> = ({ clientId }) => {
     <Box sx={{ my: 4 }}>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
+      <Typography variant="h5" component="h2" gutterBottom>
+        Client Reports
+      </Typography>
+
       {summary && (
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Reports Summary
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            Overall Summary
           </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body1"><strong>Total Reports:</strong></Typography>
-              <Typography variant="h5">{summary.totalReports}</Typography>
+          <Grid container spacing={4} justifyContent="center" textAlign="center">
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="subtitle1" color="text.secondary">Total Reports</Typography>
+              <Typography variant="h4" fontWeight="bold">{summary.totalReports}</Typography>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body1"><strong>Total Earned:</strong></Typography>
-              <Typography variant="h5">${summary.totalAmount.toFixed(2)}</Typography>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="subtitle1" color="text.secondary">Total Earned</Typography>
+              <Typography variant="h4" fontWeight="bold">${summary.totalAmount.toFixed(2)}</Typography>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body1"><strong>Total Hours:</strong></Typography>
-              <Typography variant="h5">{summary.totalHours.toFixed(2)}</Typography>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="subtitle1" color="text.secondary">Total Hours</Typography>
+              <Typography variant="h4" fontWeight="bold">{summary.totalHours.toFixed(2)}</Typography>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body1"><strong>Avg. Hourly Rate:</strong></Typography>
-              <Typography variant="h5">${summary.averageHourlyRate.toFixed(2)}</Typography>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="subtitle1" color="text.secondary">Avg. Hourly Rate</Typography>
+              <Typography variant="h4" fontWeight="bold">${summary.averageHourlyRate.toFixed(2)}</Typography>
             </Grid>
           </Grid>
         </Paper>
       )}
+
+      {monthlyEarnings.length > 0 && <EarningsChart data={monthlyEarnings} />}
 
       <TableContainer component={Paper}>
         <Table>

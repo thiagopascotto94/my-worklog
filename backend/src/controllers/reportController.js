@@ -126,7 +126,29 @@ exports.getReportsByClientId = async (req, res) => {
       averageHourlyRate,
     };
 
-    res.status(200).json({ reports, summary });
+    // Calculate monthly earnings for the last 12 months
+    const monthlyEarnings = Array(12).fill(0).map((_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      return { month: d.toLocaleString('default', { month: 'short' }), year: d.getFullYear(), earnings: 0 };
+    }).reverse();
+
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+    reports.forEach(report => {
+      const reportDate = new Date(report.endDate);
+      if (reportDate >= twelveMonthsAgo) {
+        const monthIndex = (reportDate.getFullYear() - monthlyEarnings[0].year) * 12 + reportDate.getMonth() - new Date(monthlyEarnings[0].year, 0).getMonth();
+        const correctMonthIndex = monthlyEarnings.findIndex(m => m.month === reportDate.toLocaleString('default', { month: 'short' }) && m.year === reportDate.getFullYear());
+
+        if (correctMonthIndex !== -1) {
+            monthlyEarnings[correctMonthIndex].earnings += parseFloat(report.totalAmount);
+        }
+      }
+    });
+
+    res.status(200).json({ reports, summary, monthlyEarnings: monthlyEarnings.map(m => ({ month: `${m.month}/${m.year}`, earnings: m.earnings })) });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

@@ -66,9 +66,15 @@ export interface ReportSummary {
   averageHourlyRate: number;
 }
 
+export interface MonthlyEarning {
+  month: string;
+  earnings: number;
+}
+
 export interface ClientReportsResponse {
   reports: Report[];
   summary: ReportSummary;
+  monthlyEarnings: MonthlyEarning[];
 }
 
 export const getReportsByClientId = (clientId: number): Promise<{ data: ClientReportsResponse }> => {
