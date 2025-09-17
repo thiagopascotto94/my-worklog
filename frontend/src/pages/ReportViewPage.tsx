@@ -71,6 +71,14 @@ const ReportViewPage: React.FC = () => {
     );
   };
 
+  const handleToggleAll = () => {
+    if (report && report.items && openRows.length === report.items.length) {
+      setOpenRows([]);
+    } else if (report && report.items) {
+      setOpenRows(report.items.map(item => item.WorkSession.id));
+    }
+  };
+
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!report) return <Alert severity="info">Report not found.</Alert>;
@@ -130,9 +138,19 @@ const ReportViewPage: React.FC = () => {
           </Stack>
         )}
 
-        <Typography variant="h5" gutterBottom>
-          Work Sessions
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h5" component="div">
+            Work Sessions
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleToggleAll}
+            disabled={!report || !report.items || report.items.length === 0}
+          >
+            {report && report.items && openRows.length === report.items.length ? 'Collapse All' : 'Expand All'}
+          </Button>
+        </Box>
         <TableContainer>
           <Table>
             <TableHead>
