@@ -3,6 +3,7 @@ import api from './api';
 // Types based on the backend models
 export interface SessionTask {
   id: number;
+  title: string;
   description: string;
   createdAt: string;
   status: string;

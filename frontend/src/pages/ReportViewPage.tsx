@@ -168,7 +168,7 @@ const ReportViewPage: React.FC = () => {
                                   <ListItemIcon>
                                     <CheckCircle color={task.status === 'completed' ? "success" : "disabled"} />
                                   </ListItemIcon>
-                                  <ListItemText primary={task.description} />
+                                  <ListItemText primary={task.title} />
                                 </ListItem>
                               ))}
                             </List>
