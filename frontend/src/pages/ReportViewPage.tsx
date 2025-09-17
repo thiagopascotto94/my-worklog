@@ -18,7 +18,7 @@ const ReportViewPage: React.FC = () => {
   // State for editing hourly rate
   const [editableRate, setEditableRate] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
-  const [openRow, setOpenRow] = useState<number | null>(null);
+  const [openRows, setOpenRows] = useState<number[]>([]);
 
   const fetchReport = async () => {
     if (id) {
@@ -28,6 +28,10 @@ const ReportViewPage: React.FC = () => {
         const response = await reportService.getReportById(parseInt(id, 10));
         setReport(response.data);
         setEditableRate(response.data.hourlyRate?.toString() || '');
+        // Expand all rows by default
+        if (response.data && response.data.items) {
+          setOpenRows(response.data.items.map(item => item.WorkSession.id));
+        }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to fetch report details.');
       } finally {
@@ -57,6 +61,14 @@ const ReportViewPage: React.FC = () => {
     } finally {
       setUpdateLoading(false);
     }
+  };
+
+  const handleToggleRow = (sessionId: number) => {
+    setOpenRows(prevOpenRows =>
+      prevOpenRows.includes(sessionId)
+        ? prevOpenRows.filter(id => id !== sessionId)
+        : [...prevOpenRows, sessionId]
+    );
   };
 
   if (loading) return <CircularProgress />;
@@ -136,7 +148,7 @@ const ReportViewPage: React.FC = () => {
                 const session = item.WorkSession;
                 const durationInSeconds = (new Date(session.endTime!).getTime() - new Date(session.startTime).getTime()) / 1000 - session.totalPausedSeconds;
                 const durationHours = (durationInSeconds / 3600).toFixed(2);
-                const isExpanded = openRow === session.id;
+                const isExpanded = openRows.includes(session.id);
 
                 return (
                   <React.Fragment key={session.id}>
@@ -145,7 +157,7 @@ const ReportViewPage: React.FC = () => {
                         <IconButton
                           aria-label="expand row"
                           size="small"
-                          onClick={() => setOpenRow(isExpanded ? null : session.id)}
+                          onClick={() => handleToggleRow(session.id)}
                         >
                           <ExpandMoreIcon style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                         </IconButton>
