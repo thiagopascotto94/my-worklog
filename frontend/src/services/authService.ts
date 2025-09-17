@@ -15,3 +15,8 @@ export const sendVerificationCode = (email: string) => {
 export const verifyCode = (email: string, code: string) => {
   return api.post('/auth/verify-code', { email, code });
 };
+
+export const logout = () => {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+};
