@@ -79,6 +79,26 @@ exports.generateReport = async (req, res) => {
   }
 };
 
+// @route   GET api/reports/client/:clientId
+// @desc    Get all reports for a specific client
+// @access  Private
+exports.getReportsByClientId = async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const reports = await Report.findAll({
+      where: {
+        userId: req.user.userId,
+        clientId: clientId,
+      },
+      include: [{ model: Client, as: 'client' }],
+      order: [['createdAt', 'DESC']],
+    });
+    res.status(200).json(reports);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // @route   POST api/reports/:id/duplicate
 // @desc    Duplicate a report
 // @access  Private

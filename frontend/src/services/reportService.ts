@@ -59,6 +59,10 @@ export const getReports = (): Promise<{ data: Report[] }> => {
   return api.get('/reports');
 };
 
+export const getReportsByClientId = (clientId: number): Promise<{ data: Report[] }> => {
+  return api.get(`/reports/client/${clientId}`);
+};
+
 export const getReportById = (id: number): Promise<{ data: Report }> => {
   return api.get(`/reports/${id}`);
 };
