@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert, Stack, IconButton } from '@mui/material';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert, Stack, IconButton, Grid } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { Delete, Share, Visibility, ContentCopy } from '@mui/icons-material';
 import * as reportService from '../services/reportService';
-import { Report } from '../services/reportService';
+import { Report, ReportSummary } from '../services/reportService';
 
 interface ClientReportsPageProps {
   clientId: number;
@@ -11,6 +11,7 @@ interface ClientReportsPageProps {
 
 const ClientReportsPage: React.FC<ClientReportsPageProps> = ({ clientId }) => {
   const [reports, setReports] = useState<Report[]>([]);
+  const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<Record<number, boolean>>({});
@@ -20,7 +21,8 @@ const ClientReportsPage: React.FC<ClientReportsPageProps> = ({ clientId }) => {
       setLoading(true);
       setError('');
       const { data } = await reportService.getReportsByClientId(clientId);
-      setReports(data);
+      setReports(data.reports);
+      setSummary(data.summary);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch reports.');
     } finally {
@@ -64,6 +66,32 @@ const ClientReportsPage: React.FC<ClientReportsPageProps> = ({ clientId }) => {
   return (
     <Box sx={{ my: 4 }}>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      {summary && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Reports Summary
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={6} sm={3}>
+              <Typography variant="body1"><strong>Total Reports:</strong></Typography>
+              <Typography variant="h5">{summary.totalReports}</Typography>
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <Typography variant="body1"><strong>Total Earned:</strong></Typography>
+              <Typography variant="h5">${summary.totalAmount.toFixed(2)}</Typography>
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <Typography variant="body1"><strong>Total Hours:</strong></Typography>
+              <Typography variant="h5">{summary.totalHours.toFixed(2)}</Typography>
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <Typography variant="body1"><strong>Avg. Hourly Rate:</strong></Typography>
+              <Typography variant="h5">${summary.averageHourlyRate.toFixed(2)}</Typography>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
 
       <TableContainer component={Paper}>
         <Table>

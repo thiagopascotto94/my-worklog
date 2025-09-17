@@ -59,7 +59,19 @@ export const getReports = (): Promise<{ data: Report[] }> => {
   return api.get('/reports');
 };
 
-export const getReportsByClientId = (clientId: number): Promise<{ data: Report[] }> => {
+export interface ReportSummary {
+  totalReports: number;
+  totalAmount: number;
+  totalHours: number;
+  averageHourlyRate: number;
+}
+
+export interface ClientReportsResponse {
+  reports: Report[];
+  summary: ReportSummary;
+}
+
+export const getReportsByClientId = (clientId: number): Promise<{ data: ClientReportsResponse }> => {
   return api.get(`/reports/client/${clientId}`);
 };
 
