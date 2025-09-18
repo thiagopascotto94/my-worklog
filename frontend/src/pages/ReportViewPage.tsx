@@ -5,9 +5,10 @@ import {
   TableContainer, TableHead, TableRow, Divider, TextField, Button, Stack, Collapse, IconButton,
   List, ListItem, ListItemIcon, ListItemText
 } from '@mui/material';
-import { CheckCircle, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import { CheckCircle, ExpandMore as ExpandMoreIcon, GetApp, Print } from '@mui/icons-material';
 import * as reportService from '../services/reportService';
 import { Report } from '../services/reportService';
+import * as XLSX from 'xlsx';
 
 const ReportViewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +19,7 @@ const ReportViewPage: React.FC = () => {
   // State for editing hourly rate
   const [editableRate, setEditableRate] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [openRows, setOpenRows] = useState<number[]>([]);
 
   const fetchReport = async () => {
@@ -79,17 +81,108 @@ const ReportViewPage: React.FC = () => {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownload = () => {
+    if (!report) return;
+
+    setDownloading(true);
+
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // Create a worksheet
+      const ws_data = [
+        [`Report ID:`, report.id],
+        [`Client:`, report.client?.name],
+        [`Period:`, `${new Date(report.startDate).toLocaleDateString()} - ${new Date(report.endDate).toLocaleDateString()}`],
+        [`Status:`, report.status],
+        [`Total Amount:`, `$${report.totalAmount.toFixed(2)}`],
+        [], // Empty row for spacing
+        ["Work Sessions"],
+        ["Date", "Duration (hours)", "Hourly Rate", "Line Total", "Tasks"]
+      ];
+
+      report.items?.forEach(item => {
+        const session = item.WorkSession;
+        const durationInSeconds = (new Date(session.endTime!).getTime() - new Date(session.startTime).getTime()) / 1000 - session.totalPausedSeconds;
+        const durationHours = (durationInSeconds / 3600).toFixed(2);
+        const tasks = session.tasks?.map(t => t.title).join(', ');
+        ws_data.push([
+          new Date(session.startTime).toLocaleDateString(),
+          durationHours,
+          `$${session.hourlyRate?.toFixed(2)}`,
+          `$${session.totalEarned?.toFixed(2)}`,
+          tasks || ''
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      XLSX.utils.book_append_sheet(wb, ws, "Report");
+
+      // Trigger download
+      XLSX.writeFile(wb, `Report_${report.id}_${report.client?.name}.xlsx`);
+
+    } catch (err) {
+      setError('Failed to generate XLSX file.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!report) return <Alert severity="info">Report not found.</Alert>;
 
   return (
     <Container sx={{ my: 4 }}>
-      <Paper sx={{ p: 3 }}>
+       <style>
+        {`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #printable-area, #printable-area * {
+              visibility: visible;
+            }
+            #printable-area {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+            }
+            .no-print {
+              display: none;
+            }
+          }
+        `}
+      </style>
+      <Paper sx={{ p: 3 }} id="printable-area">
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Typography variant="h4" gutterBottom>
-          Report #{report.id}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Typography variant="h4" gutterBottom>
+            Report #{report.id}
+          </Typography>
+          <Stack direction="row" spacing={1} className="no-print">
+            <Button
+              variant="outlined"
+              startIcon={<GetApp />}
+              onClick={handleDownload}
+              disabled={downloading}
+            >
+              {downloading ? <CircularProgress size={24} /> : 'Download (XLSX)'}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<Print />}
+              onClick={handlePrint}
+            >
+              Print
+            </Button>
+          </Stack>
+        </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Box>
             <Typography variant="h6">Client: {report.client?.name}</Typography>
@@ -147,6 +240,7 @@ const ReportViewPage: React.FC = () => {
             size="small"
             onClick={handleToggleAll}
             disabled={!report || !report.items || report.items.length === 0}
+            className="no-print"
           >
             {report && report.items && openRows.length === report.items.length ? 'Collapse All' : 'Expand All'}
           </Button>
@@ -176,6 +270,7 @@ const ReportViewPage: React.FC = () => {
                           aria-label="expand row"
                           size="small"
                           onClick={() => handleToggleRow(session.id)}
+                          className="no-print"
                         >
                           <ExpandMoreIcon style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                         </IconButton>
