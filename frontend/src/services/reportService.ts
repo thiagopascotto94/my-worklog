@@ -59,6 +59,28 @@ export const getReports = (): Promise<{ data: Report[] }> => {
   return api.get('/reports');
 };
 
+export interface ReportSummary {
+  totalReports: number;
+  totalAmount: number;
+  totalHours: number;
+  averageHourlyRate: number;
+}
+
+export interface MonthlyEarning {
+  month: string;
+  earnings: number;
+}
+
+export interface ClientReportsResponse {
+  reports: Report[];
+  summary: ReportSummary;
+  monthlyEarnings: MonthlyEarning[];
+}
+
+export const getReportsByClientId = (clientId: number): Promise<{ data: ClientReportsResponse }> => {
+  return api.get(`/reports/client/${clientId}`);
+};
+
 export const getReportById = (id: number): Promise<{ data: Report }> => {
   return api.get(`/reports/${id}`);
 };

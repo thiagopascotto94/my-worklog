@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Button, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { Container, Typography, Box, Button, CircularProgress, Snackbar, Alert, Tabs, Tab } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import ClientForm from '../components/ClientForm';
+import ClientReportsPage from './ClientReportsPage';
 import * as clientService from '../services/clientService';
 import { Client } from '../services/clientService';
 
@@ -12,6 +13,7 @@ const ClientEditPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [currentTab, setCurrentTab] = useState(0);
 
   useEffect(() => {
     const fetchClient = async () => {
@@ -47,11 +49,15 @@ const ClientEditPage: React.FC = () => {
     }
   };
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
+
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg">
       <Box sx={{ mt: 4, mb: 2 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Edit Client
+          {client ? `Edit Client: ${client.name}` : 'Edit Client'}
         </Typography>
         <Button variant="outlined" onClick={() => navigate('/clients')}>
           Back to Clients List
@@ -64,7 +70,24 @@ const ClientEditPage: React.FC = () => {
         </Box>
       )}
 
-      {!loading && client && <ClientForm onSave={handleSave} clientToEdit={client} isSaving={loading} />}
+      {!loading && client && (
+        <>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs value={currentTab} onChange={handleTabChange} aria-label="client details tabs">
+              <Tab label="Client Details" />
+              <Tab label="Reports" />
+            </Tabs>
+          </Box>
+
+          {currentTab === 0 && (
+            <ClientForm onSave={handleSave} clientToEdit={client} isSaving={loading} />
+          )}
+
+          {currentTab === 1 && (
+            <ClientReportsPage clientId={client.id} />
+          )}
+        </>
+      )}
 
       <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}>
         <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>

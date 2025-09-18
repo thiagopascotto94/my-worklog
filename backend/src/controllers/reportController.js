@@ -86,6 +86,81 @@ exports.generateReport = async (req, res) => {
   }
 };
 
+// @route   GET api/reports/client/:clientId
+// @desc    Get all reports for a specific client and a summary
+// @access  Private
+exports.getReportsByClientId = async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const userId = req.user.userId;
+
+    const reports = await Report.findAll({
+      where: { userId, clientId },
+      include: [
+        { model: Client, as: 'client' },
+        {
+          model: ReportItem,
+          as: 'items',
+          include: [{ model: WorkSession }],
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    let totalAmount = 0;
+    let totalSeconds = 0;
+
+    reports.forEach(report => {
+      totalAmount += parseFloat(report.totalAmount);
+      report.items.forEach(item => {
+        if (item.WorkSession) {
+          const session = item.WorkSession;
+          if (session.endTime && session.startTime) {
+            const durationInSeconds = (new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / 1000 - (session.totalPausedSeconds || 0);
+            totalSeconds += durationInSeconds;
+          }
+        }
+      });
+    });
+
+    const totalHours = totalSeconds / 3600;
+    const averageHourlyRate = totalHours > 0 ? totalAmount / totalHours : 0;
+
+    const summary = {
+      totalReports: reports.length,
+      totalAmount,
+      totalHours,
+      averageHourlyRate,
+    };
+
+    // Calculate monthly earnings for the last 12 months
+    const monthlyEarnings = Array(12).fill(0).map((_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      return { month: d.toLocaleString('default', { month: 'short' }), year: d.getFullYear(), earnings: 0 };
+    }).reverse();
+
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+    reports.forEach(report => {
+      const reportDate = new Date(report.endDate);
+      if (reportDate >= twelveMonthsAgo) {
+        const monthIndex = (reportDate.getFullYear() - monthlyEarnings[0].year) * 12 + reportDate.getMonth() - new Date(monthlyEarnings[0].year, 0).getMonth();
+        const correctMonthIndex = monthlyEarnings.findIndex(m => m.month === reportDate.toLocaleString('default', { month: 'short' }) && m.year === reportDate.getFullYear());
+
+        if (correctMonthIndex !== -1) {
+            monthlyEarnings[correctMonthIndex].earnings += parseFloat(report.totalAmount);
+        }
+      }
+    });
+
+    res.status(200).json({ reports, summary, monthlyEarnings: monthlyEarnings.map(m => ({ month: `${m.month}/${m.year}`, earnings: m.earnings })) });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // @route   POST api/reports/:id/duplicate
 // @desc    Duplicate a report
 // @access  Private

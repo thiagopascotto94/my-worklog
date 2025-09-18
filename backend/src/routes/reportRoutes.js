@@ -13,6 +13,7 @@ router.use(authMiddleware);
 
 router.post('/generate', reportController.generateReport);
 router.get('/', reportController.getReports);
+router.get('/client/:clientId', reportController.getReportsByClientId);
 router.get('/:id', reportController.getReportById);
 router.put('/:id', reportController.updateReport);
 router.delete('/:id', reportController.deleteReport);
