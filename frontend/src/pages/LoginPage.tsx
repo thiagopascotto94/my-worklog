@@ -77,9 +77,14 @@ const LoginPage: React.FC = () => {
           >
             Sign In
           </Button>
-          <Link to="/register">
-            {"Don't have an account? Sign Up"}
-          </Link>
+          <Box display="flex" justifyContent="space-between" width="100%">
+            <Link to="/pricing">
+              View Plans
+            </Link>
+            <Link to="/register">
+              {"Don't have an account? Sign Up"}
+            </Link>
+          </Box>
         </Box>
       </Box>
     </Container>
