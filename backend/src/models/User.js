@@ -31,7 +31,9 @@ module.exports = (sequelize, DataTypes) => {
     firstName: DataTypes.STRING,
     lastName: DataTypes.STRING,
     email_confirmed: DataTypes.BOOLEAN,
-    failed_login_attempts: DataTypes.INTEGER
+    failed_login_attempts: DataTypes.INTEGER,
+    subscriptionStatus: DataTypes.STRING,
+    stripeCustomerId: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'User',

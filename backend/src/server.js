@@ -27,6 +27,9 @@ app.use('/api/reports', reportRoutes);
 const taskRoutes = require('./routes/taskRoutes');
 app.use('/api/tasks', taskRoutes);
 
+const paymentRoutes = require('./routes/paymentRoutes');
+app.use('/api/payments', paymentRoutes);
+
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
